@@ -1,0 +1,10 @@
+{
+  "name": "@youtube-note/service",
+  "private": true,
+  "version": "0.1.9",
+  "type": "module",
+  "dependencies": {
+    "@youtube-note/shared": "workspace:*",
+    "zod": "4.6.2"
+  }
+}

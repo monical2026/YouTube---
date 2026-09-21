@@ -1,0 +1,9 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube 笔记：本地翻译验证",
+  "version": "0.0.1",
+  "description": "仅验证 Chrome 扩展来源中的本地翻译，无外部服务调用。",
+  "options_page": "probe.html",
+  "action": { "default_title": "打开本地翻译验证" },
+  "background": { "service_worker": "background.js" }
+}

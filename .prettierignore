@@ -1,0 +1,7 @@
+DOC/
+README.md
+AGENTS.md
+scripts/probes/
+artifacts/
+dist/
+pnpm-lock.yaml

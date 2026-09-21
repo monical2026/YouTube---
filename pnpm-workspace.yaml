@@ -1,0 +1,7 @@
+packages:
+  - extension
+  - service
+  - shared
+minimumReleaseAgeExclude:
+  - vite@8.3.0
+  - zod@4.6.2

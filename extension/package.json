@@ -1,0 +1,12 @@
+{
+  "name": "@youtube-note/extension",
+  "private": true,
+  "version": "0.1.9",
+  "type": "module",
+  "dependencies": {
+    "@youtube-note/shared": "workspace:*",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "4.6.2"
+  }
+}

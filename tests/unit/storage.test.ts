@@ -1,0 +1,17 @@
+import 'fake-indexeddb/auto';
+import { it, expect } from 'vitest';
+import { load, save } from '../../extension/src/storage/database';
+it('并发旧版本写入不能覆盖已保存的记录', async () => {
+  const original = await load('storage-one');
+  const saved = await save({ ...original, title: '保留这条笔记' }, 0);
+  await expect(save({ ...original, title: '旧窗口' }, 0)).rejects.toThrow(
+    '另一窗口',
+  );
+  expect((await load('storage-one')).title).toBe(saved.title);
+});
+it('按视频隔离持久数据', async () => {
+  const a = await load('video-a');
+  await save({ ...a, title: '视频 A' }, 0);
+  expect((await load('video-b')).title).toBe('');
+  expect((await load('video-a')).title).toBe('视频 A');
+});

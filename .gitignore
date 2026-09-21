@@ -1,0 +1,15 @@
+# 私密配置及凭据
+.env
+.env.*
+!.env.example
+*.pem
+id_rsa
+id_ed25519
+credentials.*
+.htpasswd
+# 依赖、构建、诊断及私人测试资料
+node_modules/
+dist/
+artifacts/
+*.log
+.DS_Store

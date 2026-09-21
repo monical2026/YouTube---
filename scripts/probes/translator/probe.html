@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Chrome 本地翻译验证</title>
+  <style>
+    body { font: 16px/1.7 system-ui; max-width: 760px; margin: 48px auto; padding: 0 24px; color: #202638; }
+    button { font: inherit; padding: 10px 18px; cursor: pointer; }
+    pre { padding: 20px; background: #f2f3f7; white-space: pre-wrap; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <h1>Chrome 本地翻译验证</h1>
+  <p>此页面仅使用固定英文样本。点击后可能下载 Chrome 翻译模型；不调用云端 LLM，不读取视频、笔记或密钥。</p>
+  <button id="translate" type="button">检测并翻译样本</button>
+  <div id="result" aria-live="polite">等待检测</div>
+  <script src="probe.js"></script>
+</body>
+</html>
