@@ -2,7 +2,7 @@
   "name": "youtube-note",
   "private": true,
   "type": "module",
-  "version": "0.1.9",
+  "version": "0.2.5",
   "packageManager": "pnpm@11.19.0",
   "engines": {
     "node": ">=22.12"

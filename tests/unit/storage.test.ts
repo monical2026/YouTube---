@@ -15,3 +15,26 @@ it('按视频隔离持久数据', async () => {
   expect((await load('video-b')).title).toBe('');
   expect((await load('video-a')).title).toBe('视频 A');
 });
+it('知识引用和 AI 问答在写入与重新读取后完整保留', async () => {
+  const record = await load('learning-storage');
+  const note = {
+    id: 'learning-note',
+    videoId: record.videoId,
+    title: '知识笔记',
+    startMs: 1000,
+    segmentId: 'source',
+    sourceRevision: 0,
+    original: 'Source',
+    translated: '来源',
+    selectedText: '知识点',
+    sourceKind: 'analysis' as const,
+    thought: '个人理解',
+    question: '仍有疑问',
+    revision: 0,
+    draft: true,
+    updatedAt: 1,
+    aiConversation: [{ question: '请解释', answer: '模型补充', createdAt: 1 }],
+  };
+  await save({ ...record, notes: [note] }, record.revision);
+  expect((await load(record.videoId)).notes[0]).toEqual(note);
+});

@@ -1,3 +1,5 @@
+import { textItems } from './analysis-format';
+import { AnalysisDetails } from './AnalysisDetails';
 import { NoteCard } from './NoteCard';
 import {
   timestamp,
@@ -15,13 +17,12 @@ type Props = {
   busy: string;
   mode: Mode;
   active?: Segment;
-  selected: { text: string; id: string } | null;
   getCaptions: () => Promise<void>;
   seek: (segment: Pick<Segment, 'startMs'>) => Promise<void>;
   setEditing: (segment: Segment) => void;
   newNote: (segment: Segment, text?: string) => Promise<void>;
   setEdit: (note: Note) => void;
-  analyze: () => Promise<void>;
+  onAskNote: (note: Note) => void;
   deleteNote: (id: string) => Promise<void>;
 };
 export function ContentViews({
@@ -31,13 +32,12 @@ export function ContentViews({
   busy,
   mode,
   active,
-  selected,
   getCaptions,
   seek,
   setEditing,
   newNote,
   setEdit,
-  analyze,
+  onAskNote,
   deleteNote,
 }: Props) {
   return (
@@ -99,18 +99,6 @@ export function ContentViews({
             </article>
           ))
         ))}
-      {selected && tab === 'transcript' && (
-        <button
-          className="primary"
-          style={{ position: 'sticky', bottom: 4 }}
-          onClick={() => {
-            const s = record?.segments.find((s) => s.id === selected.id);
-            if (s) void newNote(s, selected.text);
-          }}
-        >
-          做笔记
-        </button>
-      )}
       {tab === 'notes' &&
         (record?.notes.length ? (
           record.notes.map((note) => (
@@ -118,6 +106,7 @@ export function ContentViews({
               key={note.id}
               note={note}
               onEdit={() => setEdit(note)}
+              onAsk={() => onAskNote(note)}
               onSeek={() => seek(note)}
               onDelete={() => deleteNote(note.id)}
             />
@@ -129,18 +118,16 @@ export function ContentViews({
         ))}
       {tab === 'analysis' && (
         <>
-          <button
-            className="primary"
-            disabled={!!busy || !record?.segments.length}
-            onClick={() => void analyze()}
-          >
-            用 LLM 整理视频脉络
-          </button>
+          {!record?.analysis && (
+            <p className="empty">点击下方“脉络”整理这个视频。</p>
+          )}
           {record?.analysis && (
             <>
-              <h2>全片总结</h2>
+              <h2 className="analysis-section-title">全片总结</h2>
               {record.analysis.summary.length <= 200 ? (
-                <p>{record.analysis.summary}</p>
+                <p data-source-ids={record.segments.map((s) => s.id).join(' ')}>
+                  {record.analysis.summary}
+                </p>
               ) : (
                 <p className="muted">
                   这份旧结果尚无简短的全片总结，可重新整理。各部分内容见下方。
@@ -154,32 +141,72 @@ export function ContentViews({
               {record.analysisSource !== sourceVersion(record.segments) && (
                 <p className="notice">逐字稿有更新，可重新整理。</p>
               )}
+              {record.analysis.formatVersion !== 2 && (
+                <p className="notice">
+                  这份结果使用旧版整理方式，重新整理可生成切片判断、知识清单和新版金句。
+                </p>
+              )}
+              {record.analysis.clipOverview && (
+                <>
+                  <h2 className="analysis-section-title">全片切片判断</h2>
+                  <p>{record.analysis.clipOverview}</p>
+                </>
+              )}
+              <p className="muted">
+                基于逐字稿，仅初步判断内容价值与独立性，未检查画面。
+              </p>
               {record.analysis.topics.map((topic, i) => (
-                <article className="card" key={i}>
-                  <button className="time" onClick={() => void seek(topic)}>
-                    {timestamp(topic.startMs)} – {timestamp(topic.endMs)}
-                  </button>
-                  <h3>{topic.title}</h3>
+                <article
+                  className="card"
+                  key={i}
+                  data-source-ids={record.segments
+                    .filter(
+                      (s) =>
+                        s.startMs >= topic.startMs && s.startMs < topic.endMs,
+                    )
+                    .map((s) => s.id)
+                    .join(' ')}
+                >
+                  <div className="topic-heading">
+                    <button className="time" onClick={() => void seek(topic)}>
+                      {timestamp(topic.startMs)} – {timestamp(topic.endMs)}
+                    </button>
+                    <h3 className="analysis-item-title">{topic.title}</h3>
+                  </div>
                   <p>{topic.introduction}</p>
-                  <p>解决问题：{topic.problem}</p>
-                  <p>适用场景：{topic.application}</p>
-                  <p>短视频建议：{topic.clipReason}</p>
+                  <strong>解决问题</strong>
+                  <ul className="analysis-list">
+                    {textItems(topic.problem).map((text, i) => (
+                      <li key={i}>{text}</li>
+                    ))}
+                  </ul>
+                  <strong>
+                    适用场景
+                    {topic.applicationOrigin
+                      ? `（${topic.applicationOrigin}）`
+                      : ''}
+                  </strong>
+                  <ul className="analysis-list">
+                    {textItems(topic.application).map((text, i) => (
+                      <li key={i}>{text}</li>
+                    ))}
+                  </ul>
+                  <strong>
+                    切片建议{topic.clipVerdict ? ` · ${topic.clipVerdict}` : ''}
+                  </strong>
+                  <ul className="analysis-list">
+                    {textItems(topic.clipReason).map((text, i) => (
+                      <li key={i}>{text}</li>
+                    ))}
+                  </ul>
                 </article>
               ))}
-              <h2>金句</h2>
-              {record.analysis.quotes.map((q, i) => (
-                <div className="card" key={i}>
-                  <p>{q.original}</p>
-                  <p>{q.chinese}</p>
-                </div>
-              ))}
-              <h2>有效方法</h2>
-              {record.analysis.methods.map((m, i) => (
-                <div className="card" key={i}>
-                  <h3>{m.title}</h3>
-                  <p>{m.description}</p>
-                </div>
-              ))}
+              <AnalysisDetails
+                key={`${record.videoId}:${record.analysisSource}`}
+                analysis={record.analysis}
+                segments={record.segments}
+                seek={seek}
+              />
             </>
           )}
         </>

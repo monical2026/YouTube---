@@ -1,3 +1,4 @@
+import { SegmentEditor } from './SegmentEditor';
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { type Mode, type Note, type Segment } from '@youtube-note/shared';
@@ -5,7 +6,9 @@ import { useVideo } from './useVideo';
 import { rpc, errorText } from '../lib/rpc';
 import { currentSegment } from '../segmentation';
 import { videoActions } from './videoActions';
-import { ResegmentDialog } from './ResegmentDialog';
+import { AskDialog } from './AskDialog';
+import { excerptNote, type Excerpt } from './learning-notes';
+import { useTextSelection, SelectionActions } from './useTextSelection';
 import { ExportDialog } from './ExportDialog';
 import { NoteEditor } from './NoteEditor';
 import { PanelControls } from './PanelControls';
@@ -24,18 +27,19 @@ function App() {
     [follow, setFollow] = useState(true),
     [edit, setEdit] = useState<Note | null>(null),
     [editing, setEditing] = useState<Segment | null>(null),
-    [selected, setSelected] = useState<{
-      text: string;
-      id: string;
-      ids: string[];
-      language: 'original' | 'translated' | 'mixed';
-    } | null>(null);
+    [asking, setAsking] = useState<Note | null>(null);
   const [candidate, setCandidate] = useState<
     { id: string; revision: number; text: string }[] | null
   >(null);
   const [exportOpen, setExportOpen] = useState(false);
-  const [resegmentOpen, setResegmentOpen] = useState(false);
   const scroll = useRef<HTMLDivElement>(null);
+  const { selected, setSelected, selectText } = useTextSelection(
+    scroll,
+    record,
+    tab,
+  );
+  const currentVideo = useRef(context?.videoId);
+  currentVideo.current = context?.videoId;
   const generation = useRef(0);
   const jobLock = useRef<number | null>(null);
   const quickId = new URLSearchParams(location.search).get('note');
@@ -46,7 +50,7 @@ function App() {
   useEffect(() => {
     const token = ++generation.current;
     setExportOpen(false);
-    setResegmentOpen(false);
+    setAsking(null);
     setBusy('');
     setProgress(null);
     setSelected(null);
@@ -56,13 +60,16 @@ function App() {
     return () => {
       generation.current = token + 1;
     };
-  }, [context?.videoId]);
+  }, [context?.videoId, setSelected]);
   useEffect(() => {
-    if (quickId && record) {
+    setSelected(null);
+  }, [tab, setSelected]);
+  useEffect(() => {
+    if (quickId && record && !asking) {
       const note = record.notes.find((n) => n.id === quickId);
       if (note) setEdit((previous) => previous ?? note);
     }
-  }, [quickId, record]);
+  }, [quickId, record, asking]);
   const activeId = active?.id;
   useEffect(() => {
     if (follow && activeId)
@@ -107,38 +114,33 @@ function App() {
   }
   async function newNote(segment: Segment, text?: string) {
     if (!record || !context) return;
-    const sourceSegments =
-      text && selected
-        ? record.segments.filter((s) => selected.ids.includes(s.id))
-        : [segment];
-    const original = sourceSegments.map((s) => s.original).join('\n');
-    const translated = sourceSegments.map((s) => s.translated).join('\n');
-    const language = text && selected ? selected.language : undefined;
-    const note: Note = {
-      id: crypto.randomUUID(),
-      videoId: record.videoId,
-      title: context.title,
-      startMs: segment.startMs,
-      segmentId: segment.id,
-      sourceRevision: segment.revision,
-      original: language === 'original' ? text! : original,
-      translated: language === 'translated' ? text! : translated,
-      sourceSegmentIds: sourceSegments.map((s) => s.id),
-      selectedText: text,
-      selectionLanguage: language,
-      thought: '',
-      question: '',
-      revision: 0,
-      draft: true,
-      updatedAt: Date.now(),
-    };
+    await captureExcerpt(
+      {
+        text: text ?? (segment.translated || segment.original),
+        ids: [segment.id],
+        sourceKind: 'transcript',
+      },
+      false,
+    );
+  }
+  async function captureExcerpt(excerpt: Excerpt, ask: boolean) {
+    if (!record) return;
+    const token = generation.current;
     try {
+      const note = excerptNote(record, excerpt);
       await saveNote(note);
+      if (token !== generation.current) return;
       setSelected(null);
-      setEdit(note);
+      if (ask) setAsking(note);
+      else setEdit(note);
     } catch (e) {
-      setError(errorText(e));
+      if (token === generation.current) setError(errorText(e));
     }
+  }
+  function askNote(note: Note) {
+    if (note.videoId !== currentVideo.current) return;
+    setEdit(null);
+    setAsking(note);
   }
   async function deleteNote(id: string) {
     await mutate((r) => ({
@@ -155,36 +157,7 @@ function App() {
         'https://www.youtube.com',
       );
   }
-  function selectText() {
-    const selection = window.getSelection();
-    const text = selection?.toString().trim();
-    if (!selection || !text || !selection.rangeCount) {
-      return;
-    }
-    const range = selection.getRangeAt(0);
-    const paragraphs = [
-      ...(scroll.current?.querySelectorAll('p[data-language]') ?? []),
-    ].filter((p) => range.intersectsNode(p));
-    const ids = [
-      ...new Set(
-        paragraphs
-          .map((p) => p.closest('[data-id]')?.getAttribute('data-id'))
-          .filter((id): id is string => !!id),
-      ),
-    ];
-    const languages = new Set(
-      paragraphs.map((p) => p.getAttribute('data-language')),
-    );
-    const language =
-      languages.size === 1
-        ? languages.has('original')
-          ? 'original'
-          : 'translated'
-        : 'mixed';
-    setSelected(ids.length ? { text, id: ids[0], ids, language } : null);
-    setFollow(false);
-  }
-  if (quickId && edit)
+  if (quickId && edit && !asking)
     return (
       <NoteEditor
         key={edit.id}
@@ -193,6 +166,7 @@ function App() {
           record?.segments.find((s) => s.id === edit.segmentId) ??
           (record ? currentSegment(record.segments, edit.startMs) : undefined)
         }
+        onAsk={askNote}
         onSave={saveNote}
         onDelete={() => deleteNote(edit.id)}
         onClose={closeNote}
@@ -219,13 +193,6 @@ function App() {
           llmTranslate,
           run,
           mutate,
-          openResegment: () => {
-            if (editing || edit) {
-              setError('请先保存或关闭当前编辑，再预览分段');
-              return;
-            }
-            setResegmentOpen(true);
-          },
         }}
       />
       <div
@@ -233,7 +200,12 @@ function App() {
         ref={scroll}
         onWheel={() => setFollow(false)}
         onTouchMove={() => setFollow(false)}
-        onMouseUp={selectText}
+        onMouseUp={() => {
+          selectText();
+          if (window.getSelection()?.toString()) setFollow(false);
+        }}
+        onKeyUp={selectText}
+        onScroll={() => setSelected(null)}
       >
         {busy ? (
           <LoadingView label={busy} progress={progress} />
@@ -264,35 +236,44 @@ function App() {
                 busy,
                 mode,
                 active,
-                selected,
                 getCaptions,
                 seek,
                 setEditing,
                 newNote,
                 setEdit,
-                analyze,
+                onAskNote: askNote,
                 deleteNote,
               }}
             />
           </>
         )}
       </div>
-      {resegmentOpen && record && (
-        <ResegmentDialog
-          key={record.videoId}
-          record={record}
-          mutate={mutate}
-          onClose={(changed) => {
-            setResegmentOpen(false);
-            if (changed) {
-              setCandidate(null);
-              setSelected(null);
-              setEditing(null);
-            }
-          }}
+      {selected && !asking && !edit && !busy && (
+        <SelectionActions
+          selected={selected}
+          onNote={() => void captureExcerpt(selected, false)}
+          onAsk={() => void captureExcerpt(selected, true)}
+        />
+      )}
+      {asking && (
+        <AskDialog
+          key={asking.id}
+          note={asking}
+          onSave={saveNote}
+          onClose={() => setAsking(null)}
         />
       )}
       <footer>
+        <button
+          disabled={!!busy || !record?.segments.length}
+          onClick={() => {
+            setSelected(null);
+            setTab('analysis');
+            void analyze();
+          }}
+        >
+          脉络
+        </button>
         <button
           className="follow-button"
           onClick={() => {
@@ -320,7 +301,7 @@ function App() {
           onClose={() => setExportOpen(false)}
         />
       )}
-      {edit && (
+      {edit && !asking && (
         <div style={{ position: 'absolute', inset: 0, overflow: 'auto' }}>
           <NoteEditor
             key={edit.id}
@@ -331,6 +312,7 @@ function App() {
                 ? currentSegment(record.segments, edit.startMs)
                 : undefined)
             }
+            onAsk={askNote}
             onSave={saveNote}
             onDelete={() => deleteNote(edit.id)}
             onClose={closeNote}
@@ -338,47 +320,11 @@ function App() {
         </div>
       )}
       {editing && (
-        <div className="editor" style={{ position: 'absolute', inset: 0 }}>
-          <h2>修正逐字稿</h2>
-          <textarea
-            aria-label="原文"
-            value={editing.original}
-            onChange={(e) =>
-              setEditing({ ...editing, original: e.target.value })
-            }
-          />
-          <textarea
-            aria-label="译文"
-            value={editing.translated}
-            onChange={(e) =>
-              setEditing({ ...editing, translated: e.target.value })
-            }
-          />
-          <button onClick={() => setEditing(null)}>取消</button>
-          <button
-            className="primary"
-            onClick={() =>
-              void run('正在保存…', async () => {
-                await mutate((r) => ({
-                  ...r,
-                  segments: r.segments.map((s) => {
-                    if (s.id !== editing.id) return s;
-                    if (s.revision !== editing.revision)
-                      throw new Error('此段已有更新，请核对后重试');
-                    return {
-                      ...editing,
-                      revision: s.revision + 1,
-                      manual: true,
-                    };
-                  }),
-                }));
-                setEditing(null);
-              })
-            }
-          >
-            保存修正
-          </button>
-        </div>
+        <SegmentEditor
+          segment={editing}
+          mutate={mutate}
+          onClose={() => setEditing(null)}
+        />
       )}
     </main>
   );

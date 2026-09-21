@@ -1,3 +1,4 @@
+import { answerQuestion } from './providers/questions';
 import { codexStatus } from './providers/codex';
 import { prepareGeneration, confirmGeneration, readJob } from './generation';
 import { randomUUID } from 'node:crypto';
@@ -131,6 +132,15 @@ async function handle(input: unknown): Promise<unknown> {
     );
   }
   if (r.operation === 'generate') {
+    if (
+      r.payload &&
+      typeof r.payload === 'object' &&
+      'task' in r.payload &&
+      r.payload.task === 'ask'
+    )
+      return answerQuestion(r.payload, (prompt) =>
+        llm(profile(settings.analyzeProfile, 'llm'), prompt),
+      );
     const summary = z
       .object({
         task: z.literal('summarize'),

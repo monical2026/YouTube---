@@ -20,7 +20,6 @@ type Props = {
   error: string;
   setError: Setter<string>;
   busy: string;
-  openResegment: () => void;
   candidate: Candidate;
   setCandidate: Setter<Candidate>;
   translateLocal: () => Promise<void>;
@@ -43,7 +42,6 @@ export function PanelControls({
   setError,
   busy,
   candidate,
-  openResegment,
   setCandidate,
   llmTranslate,
   translateLocal,
@@ -167,16 +165,6 @@ export function PanelControls({
             }}
           >
             独立阅读
-          </button>
-        </div>
-      )}
-      {tab === 'transcript' && !!record?.segments.length && (
-        <div className="row">
-          <button disabled={!!busy} onClick={openResegment}>
-            重新分段
-          </button>
-          <button disabled={!!busy} onClick={() => void translateLocal()}>
-            补齐本地翻译
           </button>
         </div>
       )}

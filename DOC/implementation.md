@@ -96,3 +96,60 @@ ResegmentDialog.tsx 展示推断说明及偏长数量，ContentViews.tsx 显示�
 - options/ShortcutSettings.tsx 独立读取实际绑定、打开修改入口、返回刷新及错误提示；SettingsNav.tsx 增加分类，main.tsx 接入，不依赖服务连接就可使用。组件超过 60 行主要为生命周期与单一设置区 JSX，职责保持独立；原 main.tsx 未做无关拆分。
 - ui/ContentViews.tsx 去掉硬编码快捷键提示，避免用户修改后提示错误；tests/unit/shortcuts.test.ts 新增 5 项分发、范围与失败回归。
 - 根及三个工作区 package.json、manifest 版本同步为 0.1.9；README、PLAN、service-settings、changelog、test-feedback 同步用户反馈及实际行为。无服务端逻辑修改，无需重新登记本机组件。
+
+
+## 0.1.10 AI 脉络改进
+
+生成入口仍为 service/src/providers/analysis.ts；新增场景来源、切片结论、知识与前置知识，校验金句连续原文。shared/src/index.ts 保持字段可选以兼容旧数据；analysis-batches.ts 合并知识引用并生成全片切片初步汇总。AnalysisDetails.tsx 承担知识和金句交互，ContentViews 接入总判断与新版提示；export/document.ts 同步导出。没有增加权限、依赖或自动模型请求。真实验证结果见 test-feedback.md。
+
+
+## 0.1.11 分析输出校验修复
+
+新增 service/src/providers/analysis-output.ts 集中解析模型结构与可选金句标签；analysis.ts 保留引用还原与原文验证，并给无效 JSON 固定错误。标签异常只产生警告，核心内容字段继续严格校验。真实故障为模型产生“方法洞察”，触发原 quotes[1].category 的 invalid_value，随后 host 的统一错误掩盖具体字段。未修改供应商凭据、请求重试、存储和权限。
+
+
+## 0.1.12 入口
+
+阅读、知识笔记、问答、剪贴板与测试入口清理已实现，文件职责和实际测试见 [学习工作流记录](learning-workflow-2026-09-21.md)。新字幕始终走版本 2 分段，移除的是界面测试操作；兼容恢复代码与已有备份保留。主面板拆出选区、问答和逐字稿编辑组件。
+
+
+## 0.2.0 修改文件与职责
+
+- shared/src/index.ts：兼容旧金句标签并输出五类，笔记新增可选知识标题；shared/src/questions.ts：问答增加可选标题与来源性质，兼容旧请求。
+- service/src/providers/analysis.ts：五类筛选定义；questions.ts：区分 AI 摘录和讲者原文，不把空来源内容当作已获得逐字稿。
+- extension/src/ui/learning-notes.ts：划词只保存选中内容，提问不再带原始上下文；useTextSelection.tsx：取得知识卡标题。
+- AnalysisDetails.tsx、ContentViews.tsx、main.tsx：知识标签加粗、移除常驻操作及不再使用的回调。
+- NoteEditor.tsx：精简选区表单、取消保存草稿、四按钮同排；NoteCard.tsx 和 AskDialog.tsx：移除重复上下文及同步提示。
+- extension/src/export/document.ts 和 index.ts：两种导出入口均只输出一份选区内容；style.css：模块标题、知识段落和表单排版。
+- tests/unit/learning-tools.test.ts、analysis-details.test.ts：精简摘录、旧笔记保护、发送及导出边界、五类及旧标签兼容。
+- 根与三个工作区 package.json、extension/manifest.json：统一 0.2.0；README、PLAN、design、technical-design、test-plan、test-feedback、changelog：记录确认规则和验证。
+- 延续现有 JSX 组件和 shared 汇总结构，不作无关拆分；NoteEditor 的长函数仍仅负责单一编辑表单及交互。
+
+
+## 0.2.1 修改文件与职责
+
+- shared/src/index.ts、questions.ts、analysis-batches.ts：知识数组兼容与合并，笔记受限格式和手改标志。
+- service/src/providers/analysis.ts、analysis-output.ts、questions.ts：要求知识逐条输出、兼容校验、区分手改摘录。
+- ui/AnalysisDetails.tsx：知识两栏目列表；excerpt-format.ts：受限结构提取；ExcerptEditor.tsx：直接编辑与四种排版工具；AnswerText.tsx：可选标题呈现。
+- ui/useTextSelection.tsx、learning-notes.ts：保存选区结构和来源字号；NoteEditor.tsx、NoteCard.tsx、AskDialog.tsx：编辑、展示和空摘录保护；export/document.ts、index.ts：结构化知识和笔记导出。
+- ui/style.css：显式固定实际正文字号、长标题网格和摘录编辑样式。五处版本同步 0.2.1，文档记录字体核查纠正、实际测试与待验收范围。无新增依赖或权限。
+
+
+## 0.2.2 字号与标题标识
+
+ContentViews.tsx 与 AnalysisDetails.tsx 为五个大标题加 analysis-section-title，为片段、知识点和方法标题加 analysis-item-title；style.css 统一相应参数并用空内容伪元素显示竖条，不污染复制文字。逐字稿采用 .segment p[data-language] 同时覆盖单语和双语字号及行高。版本文件与 README、PLAN、design、changelog、test-feedback 同步。实际 Chrome 测量见测试反馈。
+
+
+## 0.2.3 修改范围
+
+NoteCard.tsx 增加图标与统一问答类，取消来源字号的内联覆盖；NoteEditor.tsx、ExcerptEditor.tsx 同步摘录显示与标签；style.css 统一卡片／编辑／回答文字层级及按钮。五处版本一致，设计样式、README、PLAN 和更新记录同步。未修改模型、存储协议、权限或依赖。
+
+
+## 0.2.4 修改文件与职责
+
+ExcerptEditor.tsx、NoteEditor.tsx 调整状态、图标、选填；AnswerText.tsx 与 answer-sections.ts 识别常见回答标题但不插入 HTML；style.css 定义视觉层级。AnswerSettings.tsx 读取和保存本机默认要求；AskDialog.tsx 等待加载并传入本次要求；answer-note.ts、shared/questions.ts、service/providers/questions.ts 同步可选协议及模型规则。新增章节解析和请求契约回归，五处版本、README 与文档同步。
+
+
+## 0.2.5 笔记内层装饰精简
+
+将 AI 提问的圆角边框、左侧强调线与内边距限定为编辑表单样式。笔记展示卡片不再显示内层框线；外层笔记卡片、编辑表单、折叠交互和文字参数保持原样。仅 style.css 选择器范围、五处版本与说明文档更新。

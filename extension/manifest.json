@@ -1,10 +1,11 @@
 {
   "manifest_version": 3,
   "name": "YouTube 学习笔记",
-  "version": "0.1.9",
+  "version": "0.2.5",
   "description": "带时间的双语逐字稿、中文梳理和可编辑学习笔记。",
   "permissions": [
     "storage",
+    "clipboardWrite",
     "nativeMessaging",
     "webNavigation",
     "scripting"

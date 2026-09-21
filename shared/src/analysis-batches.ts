@@ -31,12 +31,62 @@ export function analysisBatches(
   return batches;
 }
 export function mergeAnalyses(parts: Analysis[]): Analysis {
+  const topics = parts
+    .flatMap((part) => part.topics)
+    .sort((a, b) => a.startMs - b.startMs);
+  const known = topics.filter((t) => t.clipVerdict);
+  const recommended = known.filter((t) => t.clipVerdict === '建议切片');
+  const conditional = known.filter((t) => t.clipVerdict === '有条件建议');
+  const clipOverview =
+    known.length === topics.length && known.length
+      ? `${recommended.length ? '值得挑选局部片段' : conditional.length ? '部分内容可有条件切片' : '暂不建议独立切片'}。共 ${topics.length} 个主题，${recommended.length} 个建议切片，${conditional.length} 个有条件建议。${[
+          ...recommended,
+          ...conditional,
+        ]
+          .slice(0, 3)
+          .map((t) => `可关注「${t.title}」`)
+          .join(' ')}（基于各段文字独立性的初步汇总）`
+      : undefined;
+  const knowledge = new Map<
+    string,
+    NonNullable<Analysis['knowledge']>[number]
+  >();
+  for (const item of parts.flatMap((part) => part.knowledge ?? [])) {
+    const key = item.title.trim().toLocaleLowerCase();
+    const existing = knowledge.get(key);
+    knowledge.set(
+      key,
+      existing
+        ? {
+            ...existing,
+            understanding: [
+              ...new Set([existing.understanding, item.understanding].flat()),
+            ],
+            role: [...new Set([existing.role, item.role].flat())],
+            segmentIds: [
+              ...new Set([...existing.segmentIds, ...item.segmentIds]),
+            ],
+          }
+        : item,
+    );
+  }
   return {
+    formatVersion:
+      parts.length && parts.every((part) => part.formatVersion === 2)
+        ? 2
+        : undefined,
+    clipOverview,
+    knowledge: [...knowledge.values()],
+    prerequisites: [
+      ...new Map(
+        parts
+          .flatMap((part) => part.prerequisites ?? [])
+          .map((p) => [`${p.title}:${p.description}:${p.origin}`, p]),
+      ).values(),
+    ],
     warnings: parts.flatMap((part) => part.warnings ?? []),
     summary: parts.map((part) => part.summary).join('\n\n'),
-    topics: parts
-      .flatMap((part) => part.topics)
-      .sort((a, b) => a.startMs - b.startMs),
+    topics,
     quotes: [
       ...new Map(
         parts

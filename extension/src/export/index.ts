@@ -13,7 +13,7 @@ export function notesMarkdown(record: VideoRecord): string {
     record.notes
       .map(
         (n) =>
-          `## [${timestamp(n.startMs)}](https://www.youtube.com/watch?v=${record.videoId}&t=${Math.floor(n.startMs / 1000)})${n.draft ? ' · 草稿' : ''}\n\n${n.selectedText ? `> ${n.selectedText.replaceAll('\n', '\n> ')}\n\n` : ''}${n.original}\n\n${n.translated}\n\n${n.thought ? `💡 ${n.thought}\n\n` : ''}${n.question ? `❓ ${n.question}\n` : ''}`,
+          `## [${timestamp(n.startMs)}](https://www.youtube.com/watch?v=${record.videoId}&t=${Math.floor(n.startMs / 1000)})${n.draft ? ' · 草稿' : ''}\n\n${n.selectedText !== undefined ? `> ${(n.excerptMarkdown ?? n.selectedText).replaceAll('\n', '\n> ')}\n\n` : ''}${n.selectedText !== undefined ? '' : n.original}\n\n${n.selectedText !== undefined ? '' : n.translated}\n\n${n.thought ? `💡 ${n.thought}\n\n` : ''}${n.question ? `❓ ${n.question}\n` : ''}`,
       )
       .join('\n')
   );

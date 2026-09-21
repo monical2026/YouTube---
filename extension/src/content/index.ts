@@ -37,7 +37,7 @@ function frameHost(noteId?: string): HTMLElement {
   const frame = document.createElement('iframe');
   frame.src = `${panelUrl}${noteId ? `?note=${encodeURIComponent(noteId)}` : ''}`;
   frame.title = noteId ? '快捷笔记' : '学习笔记';
-  frame.allow = 'translator';
+  frame.allow = 'translator; clipboard-write';
   frame.style.cssText =
     'width:100%;height:100%;border:0;border-radius:14px;color-scheme:light dark';
   shadow.append(frame);

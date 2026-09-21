@@ -17,6 +17,9 @@
 }
 body {
   margin: 0;
+  /* 保留真实扩展原有正文字号，避免依赖 Chrome 注入的 75% 规则。 */
+  font-size: 11.25px;
+  font-family: inherit;
 }
 button,
 select,
@@ -137,6 +140,10 @@ header {
 .segment p {
   margin: 4px 0;
   white-space: pre-wrap;
+}
+.segment p[data-language] {
+  font-size: 12px;
+  line-height: 20px;
 }
 .english {
   font-size: 14px;
@@ -495,15 +502,18 @@ progress {
 }
 .note-card-heading {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   margin-bottom: 10px;
 }
 .note-card-label {
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  line-height: 21.71px;
   color: var(--muted);
 }
 .note-card .note-time {
@@ -512,8 +522,10 @@ progress {
   padding: 0;
   min-height: 26px;
   color: #0869da;
-  font-family: ui-monospace, monospace;
-  font-size: 13px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 21.71px;
 }
 .note-card p {
   white-space: pre-wrap;
@@ -616,4 +628,359 @@ progress {
   gap: 6px;
   align-items: center;
   font-size: 14px;
+}
+
+.quote-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.quote-copy {
+  margin-left: auto;
+  position: relative;
+  display: flex;
+}
+.quote-copy-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  box-shadow: none;
+}
+.quote-copy-icon:hover,
+.quote-copy-icon:focus-visible {
+  color: var(--accent);
+  background: var(--surface);
+}
+.quote-copy-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 2;
+  display: grid;
+  min-width: 110px;
+  background: var(--surface);
+  border: 1px solid var(--muted);
+  border-radius: 8px;
+  padding: 4px;
+}
+.quote-copy-menu button {
+  white-space: nowrap;
+}
+.analysis-prerequisites {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.analysis-prerequisites summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.topic-heading {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.topic-heading .time {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 2px 4px;
+  min-height: 24px;
+  white-space: nowrap;
+}
+.topic-heading h3 {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.analysis-list {
+  margin: 6px 0 16px;
+  padding-left: 21px;
+}
+.analysis-list li + li {
+  margin-top: 7px;
+}
+.knowledge-sources {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+.knowledge-sources details summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+.source-time {
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  padding: 0 3px;
+  font-size: 12px;
+  min-height: 24px;
+}
+.quiet-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.quiet-actions button,
+.selection-actions button {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  font-size: 12px;
+  padding: 3px 8px;
+}
+.selection-actions {
+  position: fixed;
+  display: flex;
+  gap: 3px;
+  z-index: 20;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  box-shadow: 0 2px 8px #0001;
+  padding: 2px;
+}
+.selection-actions button:hover,
+.quiet-actions button:hover {
+  color: var(--accent);
+  background: var(--tint);
+}
+.ai-answer {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ask-dialog {
+  max-height: 90vh;
+  overflow: auto;
+}
+.ask-dialog textarea {
+  width: 100%;
+  min-height: 90px;
+}
+
+/* 模块标题与条目标题分别统一；其余正文保持原有字号。 */
+.scroll h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.analysis-item-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22.5px;
+}
+.analysis-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 26.72px;
+}
+.analysis-section-title::before {
+  content: '';
+  flex: 0 0 4px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.card .knowledge-description {
+  margin: 12px 0;
+}
+.knowledge-description strong {
+  font-weight: 600;
+}
+.editor .note-field {
+  display: block;
+}
+.note-field > span {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20.72px;
+}
+.note-editor-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+.note-editor-actions button {
+  white-space: nowrap;
+  font-size: 11.25px;
+  font-weight: 400;
+  line-height: 18.79px;
+  padding: 4px 10px;
+}
+.note-editor-actions > button:nth-last-child(2) {
+  margin-left: auto;
+}
+
+.excerpt-content {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20.72px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.excerpt-content p,
+.excerpt-content li {
+  font-size: inherit;
+  line-height: 20.72px;
+  margin: 6px 0;
+}
+.excerpt-content h3 {
+  font-size: 13px;
+  line-height: 20.72px;
+  font-weight: 600;
+  margin: 10px 0 6px;
+}
+.excerpt-content ul {
+  padding-left: 22px;
+  margin: 6px 0 12px;
+}
+.excerpt-input {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  min-height: 90px;
+}
+.excerpt-tools {
+  display: flex;
+  gap: 4px;
+  margin: 6px 0;
+}
+.excerpt-tools button {
+  color: var(--accent);
+  font-size: 11.25px;
+  font-weight: 400;
+  line-height: 23px;
+  background: transparent;
+}
+
+/* 笔记卡片与编辑器共用文字层级，不随创建时的来源字号改变。 */
+.note-link {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.note-card .note-annotation {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20.72px;
+}
+.note-card .note-quote p,
+.note-card .note-translation,
+.editor textarea,
+.note-conversation .ai-answer p,
+.note-conversation .ai-answer li {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20.72px;
+}
+.note-editor-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20.72px;
+}
+.excerpt-heading {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18.79px;
+}
+.note-field small,
+.excerpt-field > small,
+.excerpt-content small {
+  font-weight: 400;
+  line-height: 20.04px;
+}
+.note-conversation summary,
+.note-card .note-actions button {
+  font-size: 11.25px;
+  font-weight: 400;
+  line-height: 18.79px;
+}
+.note-conversation summary {
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.excerpt-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+.excerpt-edited {
+  color: var(--accent);
+  font-size: 11.25px;
+  font-weight: 400;
+  line-height: 18.79px;
+  border-radius: 4px;
+  background: var(--tint);
+  padding: 2px 6px;
+}
+.editor .note-field > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.editor .note-field > span svg {
+  margin: 0;
+}
+.excerpt-tools button {
+  border-color: var(--line);
+  background: var(--tint);
+}
+.note-conversation {
+  margin: 12px 0;
+}
+.editor .note-conversation {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.note-conversation > summary {
+  color: var(--accent);
+}
+.answer-section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20.72px;
+  margin: 12px 0 6px;
+}
+.answer-section-title > span {
+  font-size: 9px;
+  color: var(--accent);
+}
+
+.answer-settings {
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.answer-settings > summary {
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 600;
+}
+.answer-settings textarea {
+  min-height: 120px;
+  font-size: 13px;
+  line-height: 20.72px;
 }

@@ -1,7 +1,7 @@
 {
   "name": "@youtube-note/shared",
   "private": true,
-  "version": "0.1.9",
+  "version": "0.2.5",
   "type": "module",
   "exports": "./src/index.ts",
   "dependencies": {
