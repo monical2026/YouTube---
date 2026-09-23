@@ -12,7 +12,7 @@ const contextEnvelope = z.object({
   context: contextSchema.nullable(),
   tabId: z.number().optional(),
 });
-export function useVideo() {
+export function useVideo(historyVideoId?: string) {
   const query = new URLSearchParams(location.search);
   const explicit = query.has('tab') ? Number(query.get('tab')) : undefined;
   const [context, setContext] = useState<VideoContext | null>(null),
@@ -25,9 +25,18 @@ export function useVideo() {
   const queue = useRef<Promise<unknown>>(Promise.resolve());
   useEffect(() => {
     let disposed = false;
-    videoId.current = '';
+    videoId.current = historyVideoId ?? '';
+    current.current = null;
+    setRecord(null);
+    setContext(null);
+    setError('');
     const port = chrome.runtime.connect({
-      name: explicit === undefined ? 'panel' : `video:${explicit}`,
+      name:
+        historyVideoId !== undefined
+          ? 'history'
+          : explicit === undefined
+            ? 'panel'
+            : `video:${explicit}`,
     });
     function receive(input: unknown) {
       const update = z
@@ -67,6 +76,7 @@ export function useVideo() {
         });
         return;
       }
+      if (historyVideoId !== undefined) return;
       if (input === null && !disposed) {
         videoId.current = '';
         current.current = null;
@@ -86,6 +96,7 @@ export function useVideo() {
         .then((data) => {
           if (!disposed && videoId.current === ctx.videoId) {
             const loaded = recordSchema.parse(data);
+            if (loaded.revision < (current.current?.revision ?? -1)) return;
             current.current = loaded;
             setRecord(loaded);
           }
@@ -95,22 +106,35 @@ export function useVideo() {
         });
     }
     port.onMessage.addListener(receive);
-    void rpc({ type: 'getContext', tabId: explicit })
-      .then((data) => {
-        const envelope = contextEnvelope.parse(data);
-        if (!disposed) {
-          setTabId(envelope.tabId);
-          if (envelope.context) receive(envelope.context);
-        }
-      })
-      .catch((e) => {
-        if (!disposed) setError(errorText(e));
-      });
+    if (historyVideoId !== undefined) {
+      void rpc({ type: 'load', videoId: historyVideoId })
+        .then((data) => {
+          if (disposed) return;
+          const loaded = recordSchema.parse(data);
+          if (loaded.revision < (current.current?.revision ?? -1)) return;
+          current.current = loaded;
+          setRecord(loaded);
+        })
+        .catch((e) => {
+          if (!disposed) setError(errorText(e));
+        });
+    } else
+      void rpc({ type: 'getContext', tabId: explicit })
+        .then((data) => {
+          const envelope = contextEnvelope.parse(data);
+          if (!disposed) {
+            setTabId(envelope.tabId);
+            if (envelope.context) receive(envelope.context);
+          }
+        })
+        .catch((e) => {
+          if (!disposed) setError(errorText(e));
+        });
     return () => {
       disposed = true;
       port.disconnect();
     };
-  }, [explicit]);
+  }, [explicit, historyVideoId]);
   const mutate = useCallback(
     (change: (record: VideoRecord) => VideoRecord): Promise<VideoRecord> => {
       const target = videoId.current;

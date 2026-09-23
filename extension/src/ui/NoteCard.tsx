@@ -16,7 +16,7 @@ export function NoteCard({
   onDelete: () => Promise<void>;
 }) {
   return (
-    <article className="card note-card">
+    <article className="card note-card" data-note-id={note.id} tabIndex={-1}>
       <div className="note-card-heading">
         <span className="note-card-label">
           <svg

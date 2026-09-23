@@ -3,13 +3,13 @@ import { createCaptionCache } from './caption-cache';
 import { matchesExtensionPage } from './origin';
 import { z } from 'zod';
 import { requestSchema, type VideoContext } from '@youtube-note/shared';
-import { load, save } from '../storage/database';
+import { openHistory, openVideoTime } from './history';
+import { load, save, listHistory } from '../storage/database';
 import { parseCaptions, currentSegment } from '../segmentation';
 import { native } from './native-client';
 const contexts = new Map<number, VideoContext>();
 const ports = new Set<chrome.runtime.Port>();
 const cachedCaptions = createCaptionCache(load, save);
-const page = (name: string) => chrome.runtime.getURL(name);
 function isUi(sender: chrome.runtime.MessageSender) {
   return matchesExtensionPage(sender.url, chrome.runtime.id, 'panel.html');
 }
@@ -152,6 +152,9 @@ async function handle(
       context: tabId === undefined ? null : (contexts.get(tabId) ?? null),
       tabId,
     };
+  if (r.type === 'listHistory') return listHistory();
+  if (r.type === 'openHistory') return openHistory(r.videoId);
+  if (r.type === 'openVideoTime') return openVideoTime(r.videoId, r.startMs);
   if (r.type === 'load') return load(r.videoId);
   if (r.type === 'save') {
     const saved = await save(r.record, r.expectedRevision);
@@ -170,12 +173,7 @@ async function handle(
       throw new Error('无法跳转播放，请确认视频仍在当前页面且不是广告');
     return true;
   }
-  if (r.type === 'openReader') {
-    await chrome.tabs.create({
-      url: page(`panel.html?tab=${r.tabId}&video=${r.videoId}`),
-    });
-    return true;
-  }
+  if (r.type === 'openReader') return openHistory(r.videoId);
   if (r.type === 'returnVideo') {
     let target: chrome.tabs.Tab | undefined;
     if (r.tabId !== undefined) {
@@ -250,7 +248,13 @@ async function restoreContent(tabId: number) {
   });
 }
 chrome.action.onClicked.addListener((tab) => {
-  if (tab.id === undefined || !supportedUrl(tab.url)) return;
+  if (!supportedUrl(tab.url)) {
+    void openHistory().catch(() =>
+      chrome.action.setTitle({ title: '历史记录未能打开，请重试' }),
+    );
+    return;
+  }
+  if (tab.id === undefined) return;
   const tabId = tab.id;
   void (async () => {
     let opened = false;

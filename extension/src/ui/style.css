@@ -984,3 +984,7 @@ progress {
   font-size: 13px;
   line-height: 20.72px;
 }
+
+.history-trigger {
+  margin-left: auto;
+}

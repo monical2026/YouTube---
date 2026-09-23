@@ -173,3 +173,42 @@ it('删除笔记写入持久记录并保留其余笔记，通知后同步为空�
     expect(state.setters[1]).toHaveBeenLastCalledWith(stored),
   );
 });
+it('历史模式独立加载记录，忽略原视频播放/关闭通知，仍接收笔记更新', async () => {
+  vi.mocked(rpc).mockClear();
+  useVideo(ctx.videoId);
+  state.effects[0]();
+  await vi.waitFor(() => expect(state.setters[1]).toHaveBeenLastCalledWith(stored));
+  expect(vi.mocked(rpc).mock.calls.some(([r]) => (r as { type: string }).type === 'getContext')).toBe(false);
+  const count = state.setters[1].mock.calls.length;
+  state.listeners[0](null);
+  state.listeners[0]({ ...ctx, videoId: 'othervideo1' });
+  expect(state.setters[1]).toHaveBeenCalledTimes(count);
+  stored = { ...stored, revision: 2, title: '历史页编辑' };
+  state.listeners[0]({ type: 'recordChanged', videoId: ctx.videoId, revision: 2 });
+  await vi.waitFor(() => expect(state.setters[1]).toHaveBeenLastCalledWith(stored));
+});
+it('历史窗口卸载后，迟到读取不能更新旧界面', async () => {
+  let finish: (data: VideoRecord) => void = () => {};
+  vi.mocked(rpc).mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+  useVideo(ctx.videoId);
+  const dispose = state.effects[0]() as () => void;
+  dispose();
+  const calls = state.setters[1].mock.calls.length;
+  finish(stored);
+  await Promise.resolve();
+  expect(state.setters[1]).toHaveBeenCalledTimes(calls);
+});
+it('历史首次读取晚于另一窗口更新返回时，不回退新修订', async () => {
+  const pending: ((data: VideoRecord) => void)[] = [];
+  vi.mocked(rpc).mockImplementation(() => new Promise(resolve => pending.push(resolve)));
+  useVideo(ctx.videoId);
+  state.effects[0]();
+  state.listeners[0]({ type: 'recordChanged', videoId: ctx.videoId, revision: 2 });
+  await vi.waitFor(() => expect(pending).toHaveLength(2));
+  const latest = { ...stored, revision: 2, title: '最新修订' };
+  pending[1](latest);
+  await vi.waitFor(() => expect(state.setters[1]).toHaveBeenLastCalledWith(latest));
+  pending[0](stored);
+  await Promise.resolve();
+  expect(state.setters[1]).toHaveBeenLastCalledWith(latest);
+});

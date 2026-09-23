@@ -162,6 +162,7 @@ export const analysisSchema = z.object({
 });
 export type Analysis = z.infer<typeof analysisSchema>;
 export const recordSchema = z.object({
+  updatedAt: z.number().nonnegative().optional(),
   transcriptBackup: z
     .object({
       segments: z.array(segmentSchema),
@@ -220,6 +221,19 @@ export const requestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('context'), context: contextSchema }),
   z.object({ type: z.literal('getContext'), tabId: z.number().optional() }),
   z.object({ type: z.literal('load'), videoId: z.string() }),
+  z.object({ type: z.literal('listHistory') }),
+  z.object({
+    type: z.literal('openHistory'),
+    videoId: z
+      .string()
+      .regex(/^[\w-]{11}$/)
+      .optional(),
+  }),
+  z.object({
+    type: z.literal('openVideoTime'),
+    videoId: z.string().regex(/^[\w-]{11}$/),
+    startMs: z.number().nonnegative().optional(),
+  }),
   z.object({
     type: z.literal('save'),
     record: recordSchema,

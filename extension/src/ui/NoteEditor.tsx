@@ -7,6 +7,7 @@ import { type Note, type Segment, timestamp } from '@youtube-note/shared';
 import { errorText } from '../lib/rpc';
 export function NoteEditor({
   note,
+  registerLeave,
   source,
   onSave,
   onAsk,
@@ -14,6 +15,7 @@ export function NoteEditor({
   onDelete,
 }: {
   note: Note;
+  registerLeave?: (leave: (() => Promise<boolean>) | null) => void;
   source?: Segment;
   onSave: (note: Note) => Promise<void>;
   onAsk: (note: Note) => void;
@@ -27,6 +29,18 @@ export function NoteEditor({
   latest.current = draft;
   const save = useRef(onSave);
   save.current = onSave;
+  useEffect(() => {
+    registerLeave?.(async () => {
+      try {
+        await save.current(latest.current);
+        return true;
+      } catch (e) {
+        setStatus(errorText(e));
+        return false;
+      }
+    });
+    return () => registerLeave?.(null);
+  }, [registerLeave]);
   useEffect(() => {
     if (
       !source ||

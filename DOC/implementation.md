@@ -153,3 +153,14 @@ ExcerptEditor.tsx、NoteEditor.tsx 调整状态、图标、选填；AnswerText.t
 ## 0.2.5 笔记内层装饰精简
 
 将 AI 提问的圆角边框、左侧强调线与内边距限定为编辑表单样式。笔记展示卡片不再显示内层框线；外层笔记卡片、编辑表单、折叠交互和文字参数保持原样。仅 style.css 选择器范围、五处版本与说明文档更新。
+
+## 0.3.0 历史记录实现
+
+- 新增 `extension/src/history/HistoryPage.tsx`、`records.ts`、`history.css`：独立目录、标题及个人笔记搜索、命中定位、响应式两栏。
+- 新增 `extension/src/background/history.ts`：历史页打开、原视频时间跳转；后台入口新增受扩展页面来源校验保护的消息。
+- `storage/database.ts` 游标生成轻量目录，保存时增加可选更新时间；`shared/src/index.ts` 同步消息与兼容字段。未改数据库版本或旧记录。
+- 原 `ui/main.tsx` 的阅读组件移动为 `ui/App.tsx`，入口按查询参数选择历史页或视频面板；`useVideo.ts` 增加脱离播放器的记录模式。
+- `PanelControls.tsx` 合并独立阅读入口；`ContentViews.tsx` 提供缓存空态和显式时间跳转；`NoteCard.tsx` 提供命中定位；`NoteEditor.tsx` 提供切换前保存保护。
+- `App.tsx` 仍超过 300 行，保留理由：本次只抽出入口并接入历史模式，保留原有字幕任务与弹窗生命周期，避免将存储与历史功能变更同时扩大成整套面板重构；目录、搜索、跳转已分别独立。后续如继续增加面板功能，应拆出弹窗和页脚组件。
+- 新增单元回归及 `tests/browser/history.html`、`history.tsx` 隔离交互夹具；不把模拟回答当作真实服务验收。
+- 检查状态：157 项单元测试以及类型、lint、格式、构建通过；Chrome 真实记录阅读与搜索、非视频图标入口已实测。2026-09-23 用户确认历史记录功能已完善，授权本地提交与 GitHub 推送；样式保留后续优化。

@@ -38,3 +38,32 @@ it('知识引用和 AI 问答在写入与重新读取后完整保留', async () 
   await save({ ...record, notes: [note] }, record.revision);
   expect((await load(record.videoId)).notes[0]).toEqual(note);
 });
+it('历史目录保留旧数据、笔记与版本，新增写入记录真实时间', async () => {
+  const { listHistory } = await import('../../extension/src/storage/database');
+  const saved = await load('learning-storage');
+  const result = await listHistory();
+  expect(result.invalidCount).toBe(0);
+  const entry = result.entries.find(e => e.videoId === saved.videoId)!;
+  expect(entry.updatedAt).toBe(saved.updatedAt);
+  expect(entry.notes[0].fields).toContain('知识点');
+  expect(JSON.stringify(entry)).not.toContain('模型补充');
+  expect((await load(saved.videoId)).revision).toBe(saved.revision);
+});
+it('旧版记录无需重写即可列出，异常项只报告计数且不删除原数据', async () => {
+  const db = await new Promise<IDBDatabase>((resolve, reject) => {
+    const r = indexedDB.open('youtube-note', 1); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error);
+  });
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('videos', 'readwrite');
+    tx.objectStore('videos').put({ videoId: 'legacy', title: '旧版视频', revision: 3, segments: [], notes: [], analysis: null });
+    tx.objectStore('videos').put({ videoId: 'invalid', notes: 'broken' });
+    tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error);
+  });
+  const { listHistory } = await import('../../extension/src/storage/database');
+  const list = await listHistory();
+  expect(list.invalidCount).toBe(1);
+  expect(list.entries.find(e => e.videoId === 'legacy')?.updatedAt).toBeUndefined();
+  expect((await load('legacy')).revision).toBe(3);
+  await expect(load('invalid')).rejects.toThrow('原数据未修改');
+  db.close();
+});

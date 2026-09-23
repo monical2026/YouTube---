@@ -10,6 +10,7 @@ import type { useVideo } from './useVideo';
 type Candidate = { id: string; revision: number; text: string }[] | null;
 type Setter<T> = Dispatch<SetStateAction<T>>;
 type Props = {
+  history?: boolean;
   context: VideoContext | null;
   record: VideoRecord | null;
   tabId?: number;
@@ -31,6 +32,7 @@ type Props = {
   mutate: ReturnType<typeof useVideo>['mutate'];
 };
 export function PanelControls({
+  history = false,
   context,
   record,
   tabId,
@@ -53,7 +55,8 @@ export function PanelControls({
       <header>
         <div className="panel-heading">
           <div className="panel-video-title">
-            {context?.title ?? '等待 YouTube 视频…'}
+            {(history ? record?.title || record?.videoId : context?.title) ??
+              '正在读取视频…'}
           </div>
           <div className="row panel-header-actions">
             <button
@@ -82,15 +85,16 @@ export function PanelControls({
             )}
           </div>
         </div>
-        {window.parent === window && context && (
+        {window.parent === window && (record || context) && (
           <button
             onClick={() =>
               void rpc({
-                type: 'returnVideo',
+                type: history ? 'openVideoTime' : 'returnVideo',
                 tabId,
                 videoId:
                   new URLSearchParams(location.search).get('video') ??
-                  context.videoId,
+                  record?.videoId ??
+                  context?.videoId,
               }).catch((e) => setError(errorText(e)))
             }
           >
@@ -148,24 +152,27 @@ export function PanelControls({
               </button>
             ))}
           </div>
-          <button
-            disabled={!!busy || !record?.segments.length}
-            onClick={() => void llmTranslate('all')}
-          >
-            LLM翻译
-          </button>
-          <button
-            onClick={() => {
-              if (tabId !== undefined && context)
-                void rpc({
-                  type: 'openReader',
-                  tabId,
-                  videoId: context.videoId,
-                }).catch((e) => setError(errorText(e)));
-            }}
-          >
-            独立阅读
-          </button>
+          {!history && (
+            <>
+              <button
+                disabled={!!busy || !record?.segments.length}
+                onClick={() => void llmTranslate('all')}
+              >
+                LLM翻译
+              </button>
+              <button
+                className="history-trigger"
+                onClick={() =>
+                  void rpc({
+                    type: 'openHistory',
+                    videoId: context?.videoId,
+                  }).catch((e) => setError(errorText(e)))
+                }
+              >
+                历史记录
+              </button>
+            </>
+          )}
         </div>
       )}
       {candidate && (

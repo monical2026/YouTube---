@@ -92,3 +92,10 @@ it('原文模式不启动翻译，快捷窗口也不争抢本地翻译任务', (
   state.effects.forEach((fn) => fn());
   expect(translateLocal).not.toHaveBeenCalled();
 });
+it('历史阅读没有播放上下文时，不自动获取字幕或翻译', () => {
+  const getCaptions = vi.fn(), translateLocal = vi.fn();
+  usePreparation({ record: empty, videoId: undefined, mode: 'bilingual', busy: '', quickId: null, getCaptions, translateLocal });
+  state.effects[0]();
+  expect(getCaptions).not.toHaveBeenCalled();
+  expect(translateLocal).not.toHaveBeenCalled();
+});

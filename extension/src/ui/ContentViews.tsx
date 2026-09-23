@@ -11,6 +11,7 @@ import {
   type Mode,
 } from '@youtube-note/shared';
 type Props = {
+  history?: boolean;
   tab: string;
   record: VideoRecord | null;
   context: VideoContext | null;
@@ -26,6 +27,7 @@ type Props = {
   deleteNote: (id: string) => Promise<void>;
 };
 export function ContentViews({
+  history = false,
   tab,
   record,
   context,
@@ -46,14 +48,22 @@ export function ContentViews({
       {tab === 'transcript' &&
         (!record?.segments.length ? (
           <div className="empty">
-            <p>自动获取未完成，可重试；无字幕时可使用下方生成选项。</p>
-            <button
-              className="primary"
-              disabled={!context || !!busy}
-              onClick={() => void getCaptions()}
-            >
-              重试获取字幕
-            </button>
+            <p>
+              {history
+                ? '这条记录尚未保存逐字稿，可返回原视频获取。'
+                : '自动获取未完成，可重试；无字幕时可使用下方生成选项。'}
+            </p>
+            {!history && (
+              <>
+                <button
+                  className="primary"
+                  disabled={!context || !!busy}
+                  onClick={() => void getCaptions()}
+                >
+                  重试获取字幕
+                </button>
+              </>
+            )}
           </div>
         ) : (
           record.segments.map((segment) => (
@@ -63,6 +73,7 @@ export function ContentViews({
               className={`segment ${active?.id === segment.id ? 'current' : ''}`}
               onClick={(e) => {
                 if (
+                  history ||
                   window.getSelection()?.toString() ||
                   (e.target instanceof Element &&
                     e.target.closest('button,textarea'))
@@ -72,9 +83,13 @@ export function ContentViews({
               }}
             >
               <div className="row">
-                <span className="time">
+                <button
+                  className="time"
+                  title="跳转到视频对应位置"
+                  onClick={() => void seek(segment)}
+                >
                   {timestamp(segment.startMs)} – {timestamp(segment.endMs)}
-                </span>
+                </button>
                 <div>
                   <button onClick={() => setEditing(segment)}>编辑</button>
                   <button onClick={() => void newNote(segment)}>摘录</button>
@@ -119,7 +134,11 @@ export function ContentViews({
       {tab === 'analysis' && (
         <>
           {!record?.analysis && (
-            <p className="empty">点击下方“脉络”整理这个视频。</p>
+            <p className="empty">
+              {history
+                ? '这条记录尚未保存视频脉络，可返回原视频整理。'
+                : '点击下方“脉络”整理这个视频。'}
+            </p>
           )}
           {record?.analysis && (
             <>
