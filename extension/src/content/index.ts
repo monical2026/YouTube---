@@ -1,4 +1,5 @@
 import { contextSchema, type VideoContext } from '@youtube-note/shared';
+import { seekPlayback } from './seek-playback';
 import { createRuntimeSession } from './runtime-session';
 const previous = globalThis as typeof globalThis & {
   __youtubeNoteDispose?: () => void;
@@ -201,8 +202,7 @@ function handleRuntimeMessage(
     const video = document.querySelector('video');
     const ad = document.querySelector('#movie_player.ad-showing');
     if (video && !ad && typeof message.startMs === 'number') {
-      video.currentTime = message.startMs / 1000;
-      void video.play().then(
+      void seekPlayback(video, message.startMs, publishPlaybackContext).then(
         () => respond({ ok: true }),
         () => respond({ ok: false }),
       );
@@ -211,6 +211,25 @@ function handleRuntimeMessage(
   }
 }
 chrome.runtime.onMessage.addListener(handleRuntimeMessage);
+function publishPlaybackContext() {
+  if (!session.active() || !validVideo()) return;
+  const video = document.querySelector('video');
+  if (!video || !metadata) return;
+  const context: VideoContext = {
+    ...metadata,
+    currentMs: video.currentTime * 1000,
+    playing: !video.paused,
+    ad: !!document.querySelector('#movie_player.ad-showing'),
+  };
+  void session.send({ type: 'context', context });
+}
+// 捕获媒体事件，兼容 YouTube 替换 video 节点；随页面会话一起清理。
+for (const event of ['seeking', 'seeked']) {
+  document.addEventListener(event, publishPlaybackContext, {
+    capture: true,
+    signal: listeners.signal,
+  });
+}
 const timer = setInterval(() => {
   if (!session.active()) return;
   if (!validVideo()) {
@@ -237,15 +256,7 @@ const timer = setInterval(() => {
     )?.prepend(button);
     if (reopen) showPanel();
   }
-  const video = document.querySelector('video');
-  if (!video || !metadata) return;
-  const context: VideoContext = {
-    ...metadata,
-    currentMs: video.currentTime * 1000,
-    playing: !video.paused,
-    ad: !!document.querySelector('#movie_player.ad-showing'),
-  };
-  void session.send({ type: 'context', context });
+  publishPlaybackContext();
 }, 400);
 
 window.dispatchEvent(new Event('youtube-note-request-metadata'));

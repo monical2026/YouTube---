@@ -173,3 +173,13 @@ ExcerptEditor.tsx、NoteEditor.tsx 调整状态、图标、选填；AnswerText.t
 ## 0.3.2 请求契约修复
 
 shared 的 analysisInput 使用 original；parseAnalysisRequest 统一 analyze/reviewAnalysis 接收校验，host 与 UI 契约回归共用。真实模型测试与真实 Chrome 端到端验收分别记录，不能互相替代。
+
+## 0.3.4 跳转高亮同步（待验收）
+
+点击逐字稿后立即发布播放器实际时间，不等待原有 400ms 轮询或 play() 完成；捕获 seeking/seeked 再次同步，兼容视频节点替换，监听器随会话清理。保留正常播放轮询以及视频归属、广告和范围校验。
+
+## 0.3.5 点击目标优先高亮（待验收）
+
+修正逐字稿时间索引为左闭右开区间，交界时刻不再属于上一段。App 接入 usePlaybackHighlight：点击立即选择目标段，播放器尚未到达时忽略旧进度对高亮的影响；到达后在该段内保持用户选择（兼容来源时间重叠），离开则恢复播放跟随。失败、视频切换或 5 秒未收到到达进度时撤销临时状态；较早请求的失败不得清除新目标。历史阅读不建立播放高亮。
+
+文件职责：segmentation/index.ts 修复索引边界；ui/playback-highlight.ts 管理目标状态转换；ui/usePlaybackHighlight.ts 管理交互状态及定时器清理；ui/App.tsx 接入点击和失败；tests/unit/playback-highlight.test.ts 覆盖边界/旧进度/重叠/乱序失败；tests/browser/playback.* 用实际组件验证显示。App 已超过 300 行，本轮将新增状态管理独立拆出，保留原有界面编排，避免无关重构。

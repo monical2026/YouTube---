@@ -38,10 +38,10 @@ export function currentSegment(
   }
   let lo = 0,
     hi = segments.length;
-  // 来源时间重叠时优先最早仍有效的一段，不虚构句内时间。
+  // 区间为 [startMs, endMs)，交界时刻归下一段；重叠时优先最早仍有效的一段。
   while (lo < hi) {
     const mid = (lo + hi) >> 1;
-    if (ends[mid] < ms) lo = mid + 1;
+    if (ends[mid] <= ms) lo = mid + 1;
     else hi = mid;
   }
   const found = segments[lo];

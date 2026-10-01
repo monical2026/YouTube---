@@ -4,6 +4,8 @@ import { type Mode, type Note, type Segment } from '@youtube-note/shared';
 import { useVideo } from './useVideo';
 import { rpc, errorText } from '../lib/rpc';
 import { currentSegment } from '../segmentation';
+import { usePlaybackHighlight } from './usePlaybackHighlight';
+import type { SeekTarget } from './playback-highlight';
 import { videoActions } from './videoActions';
 import { AskDialog } from './AskDialog';
 import { excerptNote, type Excerpt } from './learning-notes';
@@ -43,10 +45,11 @@ export function App({ history }: { history?: HistoryReader }) {
   const generation = useRef(0);
   const jobLock = useRef<number | null>(null);
   const quickId = new URLSearchParams(location.search).get('note');
-  const active =
-    record && context
-      ? currentSegment(record.segments, context.currentMs)
-      : undefined;
+  const {
+    active,
+    begin: beginHighlight,
+    cancel: cancelHighlight,
+  } = usePlaybackHighlight(record?.segments, context, sessionVideoId);
   useEffect(() => {
     const token = ++generation.current;
     setExportOpen(false);
@@ -134,7 +137,9 @@ export function App({ history }: { history?: HistoryReader }) {
     getCaptions,
     translateLocal,
   });
-  async function seek(segment: Pick<Segment, 'startMs'>) {
+  async function seek(segment: SeekTarget) {
+    const requestId = history ? undefined : beginHighlight(segment);
+    const token = generation.current;
     try {
       await rpc({
         type: history ? 'openVideoTime' : 'seek',
@@ -143,7 +148,8 @@ export function App({ history }: { history?: HistoryReader }) {
         startMs: segment.startMs,
       });
     } catch (e) {
-      setError(errorText(e));
+      if (requestId !== undefined) cancelHighlight(requestId);
+      if (token === generation.current) setError(errorText(e));
     }
   }
   async function newNote(segment: Segment, text?: string) {

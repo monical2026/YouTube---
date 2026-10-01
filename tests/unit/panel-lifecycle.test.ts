@@ -76,7 +76,11 @@ beforeEach(async () => {
     pathname: '/watch',
     href: 'https://www.youtube.com/watch?v=abcdefghijk',
   });
+  const documentEvents = new EventTarget();
+  const video = { currentTime: 0, paused: true, play: vi.fn(async () => {}) };
   vi.stubGlobal('document', {
+    addEventListener: documentEvents.addEventListener.bind(documentEvents),
+    dispatchEvent: documentEvents.dispatchEvent.bind(documentEvents),
     createElement: (tag: string) => new NodeElement(tag),
     body: new NodeElement('body', true),
     querySelector: (selector: string) =>
@@ -85,7 +89,7 @@ beforeEach(async () => {
         : selector === '#secondary-inner'
           ? secondary
           : selector === 'video'
-            ? { currentTime: 0, paused: true }
+            ? video
             : undefined,
   });
   vi.stubGlobal('chrome', {
@@ -153,4 +157,23 @@ it('重复注入清理旧定时器和消息监听，返回缓存页面不停止�
   expect(vi.getTimerCount()).toBe(1);
   below.children[0].onclick!();
   expect(secondary.children).toHaveLength(1);
+});
+
+it('真实内容脚本收到跳转请求后立即广播新位置，无需推进轮询时间', async () => {
+  vi.mocked(chrome.runtime.sendMessage).mockClear();
+  for (const listener of listeners)
+    listener(
+      { type: 'seek', videoId: 'abcdefghijk', startMs: 800 },
+      {},
+      () => {},
+    );
+  expect(chrome.runtime.sendMessage).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: 'context',
+      context: expect.objectContaining({ currentMs: 800 }),
+    }),
+  );
+  vi.mocked(chrome.runtime.sendMessage).mockClear();
+  document.dispatchEvent(new Event('seeked'));
+  expect(chrome.runtime.sendMessage).toHaveBeenCalledTimes(1);
 });
