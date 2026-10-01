@@ -5,12 +5,12 @@ export function analysisInput(segments: Segment[]) {
     id: s.id,
     startMs: s.startMs,
     endMs: s.endMs,
-    text: s.original,
+    original: s.original,
   }));
 }
 export function analysisBatches(
   segments: Segment[],
-  limit = 24000,
+  limit = 12000,
 ): Segment[][] {
   const batches: Segment[][] = [];
   let batch: Segment[] = [];
@@ -37,8 +37,9 @@ export function mergeAnalyses(parts: Analysis[]): Analysis {
   const known = topics.filter((t) => t.clipVerdict);
   const recommended = known.filter((t) => t.clipVerdict === '建议切片');
   const conditional = known.filter((t) => t.clipVerdict === '有条件建议');
-  const clipOverview =
-    known.length === topics.length && known.length
+  const clipOverview = parts.every((part) => part.formatVersion === 3)
+    ? undefined
+    : known.length === topics.length && known.length
       ? `${recommended.length ? '值得挑选局部片段' : conditional.length ? '部分内容可有条件切片' : '暂不建议独立切片'}。共 ${topics.length} 个主题，${recommended.length} 个建议切片，${conditional.length} 个有条件建议。${[
           ...recommended,
           ...conditional,
@@ -72,11 +73,15 @@ export function mergeAnalyses(parts: Analysis[]): Analysis {
   }
   return {
     formatVersion:
-      parts.length && parts.every((part) => part.formatVersion === 2)
-        ? 2
-        : undefined,
+      parts.length && parts.every((part) => part.formatVersion === 3)
+        ? 3
+        : parts.length && parts.every((part) => part.formatVersion === 2)
+          ? 2
+          : undefined,
     clipOverview,
-    knowledge: [...knowledge.values()],
+    knowledge: parts.every((part) => part.formatVersion === 3)
+      ? parts.flatMap((part) => part.knowledge ?? [])
+      : [...knowledge.values()],
     prerequisites: [
       ...new Map(
         parts

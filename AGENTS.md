@@ -20,6 +20,7 @@
 | 首先阅读 | [README.md](README.md) | 当前状态、项目入口 |
 | 确认做什么 | [DOC/PLAN.md](DOC/PLAN.md) | 已确认需求、实施默认、待确认项与阶段 |
 | 确认代码放哪 | [DOC/architecture.md](DOC/architecture.md) | 工作区、文件树和模块依赖 |
+| 修改脉络内容 | [DOC/analysis-content-design.md](DOC/analysis-content-design.md) | 已确认内容规范、生成与兼容边界 |
 | 修改界面 | [DOC/design.md](DOC/design.md) | 布局、字号、主题、交互状态 |
 | 修改业务逻辑 | [DOC/technical-design.md](DOC/technical-design.md) | 视频切换、任你说的是每次如果我把这个浏览器给关了，然后再重新启动打开这个插件的时候，我打开一个新的视频让它翻译的时候都要重新去输入这个API Key吗？务、存储和版本规则 |
 | 接入模型／API | [DOC/service-settings.md](DOC/service-settings.md) | 设置网页、服务配置、模型路由和凭据 |
@@ -53,7 +54,7 @@
 | `pnpm run build` | 扩展和本机组件构建 |
 | `pnpm run check` | 类型、lint、格式、单元测试、构建依次执行；任一步失败即失败 |
 
-禁止以 `--if-present`、`|| true`、空脚本、删断言或关规则伪装通过。check 不代替集成、端到端或人工验收；缺环境如实记阻塞。
+禁止以 `--if-present`、`|| true`、空脚本、删断言或关规则伪装通过。修改脉络必须执行 DOC/test-plan.md 的“脉络修改的必测契约回归”。check 不代替集成、端到端或人工验收；缺环境如实记阻塞。
 
 ## 四、核心业务流程
 

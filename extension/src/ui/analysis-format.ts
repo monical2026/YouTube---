@@ -1,4 +1,4 @@
-import type { Segment } from '@youtube-note/shared';
+import type { Analysis, Segment } from '@youtube-note/shared';
 export function textItems(value: string | string[]): string[] {
   if (Array.isArray(value)) return value.map((s) => s.trim()).filter(Boolean);
   return value
@@ -21,4 +21,30 @@ export function sourceRanges(ids: string[], segments: Segment[]) {
     previous = index;
   });
   return ranges;
+}
+
+type Sourced = {
+  sources?: Analysis['methods'][number]['sources'];
+  segmentIds?: string[];
+  segmentId?: string;
+};
+export function itemSources(item: Sourced, segments: Segment[]) {
+  if (!item.sources?.length)
+    return sourceRanges(
+      item.segmentIds ?? (item.segmentId ? [item.segmentId] : []),
+      segments,
+    ).map((r) => ({ ...r, label: '' }));
+  return item.sources.flatMap((r) => {
+    const start = segments.findIndex((s) => s.id === r.segmentId),
+      end = segments.findIndex((s) => s.id === r.endSegmentId);
+    if (start < 0 || end < start) return [];
+    return [
+      {
+        startMs: segments[start].startMs,
+        endMs: segments[end].endMs,
+        ids: segments.slice(start, end + 1).map((s) => s.id),
+        label: r.label,
+      },
+    ];
+  });
 }

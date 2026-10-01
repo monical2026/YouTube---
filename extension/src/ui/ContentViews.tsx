@@ -1,4 +1,4 @@
-import { textItems } from './analysis-format';
+import { AnalysisList, ClipIcon, ClipOverview } from './AnalysisFields';
 import { AnalysisDetails } from './AnalysisDetails';
 import { NoteCard } from './NoteCard';
 import {
@@ -152,28 +152,16 @@ export function ContentViews({
                   这份旧结果尚无简短的全片总结，可重新整理。各部分内容见下方。
                 </p>
               )}
-              {record.analysis.warnings?.map((warning, index) => (
-                <p className="notice" key={index}>
-                  {warning}
-                </p>
-              ))}
               {record.analysisSource !== sourceVersion(record.segments) && (
                 <p className="notice">逐字稿有更新，可重新整理。</p>
               )}
-              {record.analysis.formatVersion !== 2 && (
+              {record.analysis.formatVersion !== 3 && (
                 <p className="notice">
-                  这份结果使用旧版整理方式，重新整理可生成切片判断、知识清单和新版金句。
+                  这份结果使用旧版整理方式；主动重新整理后应用关键点、独立金句和新版切片等级。
                 </p>
               )}
-              {record.analysis.clipOverview && (
-                <>
-                  <h2 className="analysis-section-title">全片切片判断</h2>
-                  <p>{record.analysis.clipOverview}</p>
-                </>
-              )}
-              <p className="muted">
-                基于逐字稿，仅初步判断内容价值与独立性，未检查画面。
-              </p>
+              <ClipOverview analysis={record.analysis} seek={seek} />
+              <p className="muted">基于逐字稿判断内容独立性，未检查画面。</p>
               {record.analysis.topics.map((topic, i) => (
                 <article
                   className="card"
@@ -193,31 +181,26 @@ export function ContentViews({
                     <h3 className="analysis-item-title">{topic.title}</h3>
                   </div>
                   <p>{topic.introduction}</p>
-                  <strong>解决问题</strong>
-                  <ul className="analysis-list">
-                    {textItems(topic.problem).map((text, i) => (
-                      <li key={i}>{text}</li>
-                    ))}
-                  </ul>
-                  <strong>
-                    适用场景
-                    {topic.applicationOrigin
-                      ? `（${topic.applicationOrigin}）`
-                      : ''}
-                  </strong>
-                  <ul className="analysis-list">
-                    {textItems(topic.application).map((text, i) => (
-                      <li key={i}>{text}</li>
-                    ))}
-                  </ul>
-                  <strong>
-                    切片建议{topic.clipVerdict ? ` · ${topic.clipVerdict}` : ''}
-                  </strong>
-                  <ul className="analysis-list">
-                    {textItems(topic.clipReason).map((text, i) => (
-                      <li key={i}>{text}</li>
-                    ))}
-                  </ul>
+                  <AnalysisList title="解决的问题" value={topic.problem} />
+                  <AnalysisList
+                    title={
+                      record.analysis?.formatVersion === 3
+                        ? '应用场景'
+                        : `适用场景${topic.applicationOrigin ? `（${topic.applicationOrigin}）` : ''}`
+                    }
+                    value={topic.application}
+                  />
+                  <AnalysisList title="要点" value={topic.keyPoints} />
+                  <div className="clip-label">
+                    <ClipIcon />
+                    <strong>
+                      {record.analysis?.formatVersion === 3
+                        ? '切片价值'
+                        : '切片建议'}
+                      {topic.clipVerdict ? `：${topic.clipVerdict}` : ''}
+                    </strong>
+                  </div>
+                  <AnalysisList title="" value={topic.clipReason} />
                 </article>
               ))}
               <AnalysisDetails

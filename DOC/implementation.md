@@ -164,3 +164,12 @@ ExcerptEditor.tsx、NoteEditor.tsx 调整状态、图标、选填；AnswerText.t
 - `App.tsx` 仍超过 300 行，保留理由：本次只抽出入口并接入历史模式，保留原有字幕任务与弹窗生命周期，避免将存储与历史功能变更同时扩大成整套面板重构；目录、搜索、跳转已分别独立。后续如继续增加面板功能，应拆出弹窗和页脚组件。
 - 新增单元回归及 `tests/browser/history.html`、`history.tsx` 隔离交互夹具；不把模拟回答当作真实服务验收。
 - 检查状态：157 项单元测试以及类型、lint、格式、构建通过；Chrome 真实记录阅读与搜索、非视频图标入口已实测。2026-09-23 用户确认历史记录功能已完善，授权本地提交与 GitHub 推送；样式保留后续优化。
+
+
+## 0.3.1 脉络内容优化（2026-09-30）
+
+已实现 formatVersion=3、完整议题校验、全片结构化复核、连续原文金句筛选、关键点与结构化方法、主要与补充出处、新版展示及导出。源文件分工、限制和长函数保留理由见 [内容规范](analysis-content-design.md)。旧版结果可读，失败不覆盖，真实 Chrome 最终验收由用户完成。
+
+## 0.3.2 请求契约修复
+
+shared 的 analysisInput 使用 original；parseAnalysisRequest 统一 analyze/reviewAnalysis 接收校验，host 与 UI 契约回归共用。真实模型测试与真实 Chrome 端到端验收分别记录，不能互相替代。

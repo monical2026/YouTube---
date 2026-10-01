@@ -1,7 +1,13 @@
 import { z } from 'zod';
 import { analysisSchema } from '@youtube-note/shared';
 const reference = z.coerce.string();
+const sourceSchema = z.object({
+  segmentId: reference,
+  endSegmentId: reference,
+  label: z.string(),
+});
 const outputSchema = z.object({
+  formatVersion: z.literal(3).optional(),
   summary: z.string(),
   topics: z.array(
     z.object({
@@ -9,11 +15,20 @@ const outputSchema = z.object({
       startId: reference,
       endId: reference,
       introduction: z.string(),
-      problem: z.union([z.string(), z.array(z.string().min(1)).min(1)]),
-      application: z.union([z.string(), z.array(z.string().min(1)).min(1)]),
-      clipReason: z.union([z.string(), z.array(z.string().min(1)).min(1)]),
+      keyPoints: z.array(z.string().min(1)).optional(),
+      problem: z.union([z.string(), z.array(z.string().min(1))]),
+      application: z.union([z.string(), z.array(z.string().min(1))]),
+      clipReason: z.union([z.string(), z.array(z.string().min(1))]),
       clipVerdict: z
-        .enum(['建议切片', '有条件建议', '不建议单独切片'])
+        .enum([
+          '建议切片',
+          '有条件建议',
+          '不建议单独切片',
+          '高',
+          '中',
+          '低',
+          '需核对画面',
+        ])
         .optional(),
       applicationOrigin: z.enum(['讲者明确', 'AI 延伸']).optional(),
     }),
@@ -22,9 +37,10 @@ const outputSchema = z.object({
     .array(
       z.object({
         title: z.string(),
-        understanding: z.union([z.string(), z.array(z.string().min(1)).min(1)]),
-        role: z.union([z.string(), z.array(z.string().min(1)).min(1)]),
+        understanding: z.union([z.string(), z.array(z.string().min(1))]),
+        role: z.union([z.string(), z.array(z.string().min(1))]),
         segmentIds: z.array(reference).min(1),
+        sources: z.array(sourceSchema).min(1).optional(),
       }),
     )
     .optional(),
@@ -51,11 +67,22 @@ const outputSchema = z.object({
       title: z.string(),
       description: z.string(),
       segmentId: reference,
+      applicability: z.string().optional(),
+      steps: z.array(z.string().min(1)).optional(),
+      limitations: z.array(z.string().min(1)).optional(),
+      sources: z.array(sourceSchema).min(1).optional(),
     }),
   ),
 });
 
 const labels: Record<string, string> = {
+  formatVersion: '格式版本',
+  keyPoints: '要点',
+  sources: '出处范围',
+  applicability: '适用情况',
+  steps: '具体做法',
+  limitations: '条件与限制',
+  label: '出处说明',
   summary: '全片总结',
   topics: '视频主题',
   knowledge: '知识清单',

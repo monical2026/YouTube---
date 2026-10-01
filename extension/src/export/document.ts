@@ -1,3 +1,4 @@
+import { analysisBlocks } from './analysis';
 import { textItems } from '../ui/analysis-format';
 import { timestamp, type Mode, type VideoRecord } from '@youtube-note/shared';
 import { transcriptText } from './index';
@@ -52,6 +53,8 @@ export function exportBlocks(
     blocks.push({ heading: true, text: '视频脉络' });
     const a = record.analysis;
     if (!a) blocks.push({ text: '暂无视频脉络' });
+    else if (a.formatVersion === 3)
+      blocks.push(...analysisBlocks(a, record.segments));
     else {
       blocks.push({ heading: true, text: '全片总结' }, { text: a.summary });
       if (a.clipOverview)

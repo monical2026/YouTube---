@@ -988,3 +988,17 @@ progress {
 .history-trigger {
   margin-left: auto;
 }
+
+/* 脉络 0.3.1：沿用已确认字号，仅增加切片标识与来源布局。 */
+.clip-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.clip-icon {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+.clip-overview {
+  margin: 8px 0;
+}

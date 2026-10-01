@@ -6,6 +6,7 @@ import {
   sourceVersion,
   analysisBatches,
   mergeAnalyses,
+  analysisInput,
   type Analysis,
 } from '@youtube-note/shared';
 import { rpc, errorText } from '../lib/rpc';
@@ -166,39 +167,32 @@ export function videoActions({
             await rpc({
               type: 'native',
               operation: 'generate',
-              payload: { task: 'analyze', segments },
+              payload: { task: 'analyze', segments: analysisInput(segments) },
             }),
           ),
         );
         if (token !== generation.current) return;
-        setProgress((index + 1) / batches.length);
+        setProgress(((index + 1) / batches.length) * 0.85);
       }
-      const result = mergeAnalyses(parts);
-      if (parts.length > 1 || result.summary.length > 160) {
-        setBusy('正在生成简短总览…');
-        try {
-          result.summary = z
-            .string()
-            .min(1)
-            .max(200)
-            .parse(
-              await rpc({
-                type: 'native',
-                operation: 'generate',
-                payload: {
-                  task: 'summarize',
-                  summaries: parts.map((part) => part.summary),
-                },
-              }),
-            );
-        } catch {
-          result.warnings = [
-            ...(result.warnings ?? []),
-            '简短总览未生成，暂保留各部分总结，可展开查看。',
-          ];
-        }
-        if (token !== generation.current) return;
-      }
+      const draft = mergeAnalyses(parts);
+      if (draft.formatVersion !== 3)
+        throw new Error('本机组件尚未更新，请更新后再整理；已有结果仍保留');
+      setBusy('正在复核全片主线、关键点、金句与方法…');
+      const result = analysisSchema.parse(
+        await rpc({
+          type: 'native',
+          operation: 'generate',
+          payload: {
+            task: 'reviewAnalysis',
+            analysis: draft,
+            segments: analysisInput(record.segments),
+          },
+        }),
+      );
+      if (result.formatVersion !== 3)
+        throw new Error('全片复核返回旧结构，已有结果未覆盖');
+      if (token !== generation.current) return;
+      setProgress(1);
       await mutate((r) => {
         if (sourceVersion(r.segments) !== sourceVersion(record.segments))
           throw new Error('整理期间逐字稿已修改，请重新整理；已有内容仍保留');

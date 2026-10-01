@@ -1,3 +1,4 @@
+import { analysisSchema } from './analysis-schema';
 import { z } from 'zod';
 
 export const modeSchema = z.enum(['original', 'chinese', 'bilingual']);
@@ -35,6 +36,26 @@ export const segmentSchema = z.object({
   engine: z.string().default(''),
 });
 export type Segment = z.infer<typeof segmentSchema>;
+export const analysisRequestSchema = z.discriminatedUnion('task', [
+  z.object({
+    task: z.literal('analyze'),
+    segments: z.array(segmentSchema).min(1).max(15000),
+  }),
+  z.object({
+    task: z.literal('reviewAnalysis'),
+    analysis: analysisSchema,
+    segments: z.array(segmentSchema).min(1).max(15000),
+  }),
+]);
+export function parseAnalysisRequest(input: unknown) {
+  const result = analysisRequestSchema.safeParse(input);
+  if (!result.success)
+    throw new Error(
+      '脉络请求格式不兼容，尚未调用模型。请重新加载扩展并更新本机组件后重试。',
+    );
+  return result.data;
+}
+
 export const contextSchema = z.object({
   videoId: z.string().regex(/^[\w-]{11}$/),
   title: z.string().max(1000),
@@ -87,80 +108,7 @@ export const noteSchema = z.object({
   updatedAt: z.number(),
 });
 export type Note = z.infer<typeof noteSchema>;
-export const analysisSchema = z.object({
-  formatVersion: z.literal(2).optional(),
-  clipOverview: z.string().optional(),
-  knowledge: z
-    .array(
-      z.object({
-        title: z.string(),
-        understanding: z.union([z.string(), z.array(z.string().min(1)).min(1)]),
-        role: z.union([z.string(), z.array(z.string().min(1)).min(1)]),
-        segmentIds: z.array(z.string()).min(1),
-      }),
-    )
-    .optional(),
-  prerequisites: z
-    .array(
-      z.object({
-        title: z.string(),
-        description: z.string(),
-        origin: z.enum(['讲者明确', 'AI 延伸']),
-      }),
-    )
-    .optional(),
-  warnings: z.array(z.string()).optional(),
-  summary: z.string(),
-  topics: z.array(
-    z.object({
-      title: z.string(),
-      startMs: z.number().nonnegative(),
-      endMs: z.number().nonnegative(),
-      introduction: z.string(),
-      problem: z.union([z.string(), z.array(z.string().min(1)).min(1)]),
-      application: z.union([z.string(), z.array(z.string().min(1)).min(1)]),
-      clipReason: z.union([z.string(), z.array(z.string().min(1)).min(1)]),
-      clipVerdict: z
-        .enum(['建议切片', '有条件建议', '不建议单独切片'])
-        .optional(),
-      applicationOrigin: z.enum(['讲者明确', 'AI 延伸']).optional(),
-    }),
-  ),
-  quotes: z.array(
-    z.object({
-      segmentId: z.string(),
-      original: z.string(),
-      chinese: z.string(),
-      endSegmentId: z.string().optional(),
-      category: z
-        .enum([
-          '反直觉洞察',
-          '点透本质',
-          '方法与原则',
-          '关键事实',
-          '案例与经验',
-          '惊人事实',
-          '轶事',
-        ])
-        .transform((value) =>
-          value === '惊人事实'
-            ? ('关键事实' as const)
-            : value === '轶事'
-              ? ('案例与经验' as const)
-              : value,
-        )
-        .optional(),
-    }),
-  ),
-  methods: z.array(
-    z.object({
-      title: z.string(),
-      description: z.string(),
-      segmentId: z.string(),
-    }),
-  ),
-});
-export type Analysis = z.infer<typeof analysisSchema>;
+export { analysisSchema, type Analysis } from './analysis-schema';
 export const recordSchema = z.object({
   updatedAt: z.number().nonnegative().optional(),
   transcriptBackup: z

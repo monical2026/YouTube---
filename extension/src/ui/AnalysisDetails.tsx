@@ -1,4 +1,5 @@
-import { sourceRanges, textItems } from './analysis-format';
+import { itemSources } from './analysis-format';
+import { AnalysisList, ExtraSources, SourceHeading } from './AnalysisFields';
 import { copyText } from '../lib/clipboard';
 import { useState } from 'react';
 import { timestamp, type Analysis, type Segment } from '@youtube-note/shared';
@@ -112,65 +113,40 @@ function QuoteCard({
 export function AnalysisDetails({ analysis, segments, seek }: Props) {
   const [error, setError] = useState('');
   const sources = new Map(segments.map((s) => [s.id, s]));
-  function jump(source: Segment) {
+  function jump(source: Pick<Segment, 'startMs'>) {
     setError('');
     void seek(source).catch(() => setError('跳转失败，请回到视频页面后重试'));
   }
   return (
     <>
       {error && <p role="alert">{error}</p>}
-      <h2 className="analysis-section-title">知识清单</h2>
+      <h2 className="analysis-section-title">
+        {analysis.formatVersion === 3 ? '关键点' : '知识清单'}
+      </h2>
       {analysis.knowledge?.length ? (
         analysis.knowledge.map((item, index) => {
-          const ranges = sourceRanges(item.segmentIds, segments);
-          const timeLink = (range: (typeof ranges)[number]) => (
-            <button
-              className="source-time"
-              key={range.ids[0]}
-              onClick={() =>
-                void seek(range).catch(() => setError('跳转失败，请重试'))
-              }
-            >
-              {timestamp(range.startMs)}–{timestamp(range.endMs)}
-            </button>
-          );
+          const ranges = itemSources(item, segments);
           return (
             <article
               className="card"
               key={index}
-              data-source-ids={item.segmentIds.join(' ')}
+              data-source-ids={ranges.flatMap((r) => r.ids).join(' ')}
               data-excerpt-title={item.title}
             >
-              <h3 className="analysis-item-title">{item.title}</h3>
-              <strong>需要理解</strong>
-              <ul className="analysis-list">
-                {textItems(item.understanding).map((text, i) => (
-                  <li key={i}>{text}</li>
-                ))}
-              </ul>
-              <strong>视频中的作用</strong>
-              <ul className="analysis-list">
-                {textItems(item.role).map((text, i) => (
-                  <li key={i}>{text}</li>
-                ))}
-              </ul>
-              <div className="knowledge-sources">
-                <span className="muted">视频依据</span>
-                {ranges[0] && timeLink(ranges[0])}
-                {ranges.length > 1 && (
-                  <details>
-                    <summary>另 {ranges.length - 1} 处</summary>
-                    {ranges.slice(1).map(timeLink)}
-                  </details>
-                )}
-              </div>
+              <SourceHeading title={item.title} ranges={ranges} jump={jump} />
+              <AnalysisList
+                title={analysis.formatVersion === 3 ? '核心含义' : '需要理解'}
+                value={item.understanding}
+              />
+              <AnalysisList title="在视频中的作用" value={item.role} />
+              <ExtraSources ranges={ranges} jump={jump} />
             </article>
           );
         })
       ) : (
         <p className="muted">
-          {analysis.formatVersion === 2
-            ? '本次未提取到可定位的核心知识点。'
+          {analysis.formatVersion !== undefined
+            ? '本次未提取到有明确来源的关键点。'
             : '重新整理后可查看知识清单。'}
         </p>
       )}
@@ -187,8 +163,8 @@ export function AnalysisDetails({ analysis, segments, seek }: Props) {
           ))
         ) : (
           <p className="muted">
-            {analysis.formatVersion === 2
-              ? '无需特别的前置知识。'
+            {analysis.formatVersion !== undefined
+              ? '无特别前置要求。'
               : '重新整理后可查看前置知识。'}
           </p>
         )}
@@ -211,15 +187,40 @@ export function AnalysisDetails({ analysis, segments, seek }: Props) {
         />
       ))}
       {!analysis.quotes.length && (
-        <p className="muted">本次未提取到有明确来源的金句。</p>
+        <p className="muted">未发现符合独立表达要求的金句。</p>
       )}
       <h2 className="analysis-section-title">有效方法</h2>
-      {analysis.methods.map((m, i) => (
-        <div className="card" key={i} data-source-ids={m.segmentId}>
-          <h3 className="analysis-item-title">{m.title}</h3>
-          <p>{m.description}</p>
-        </div>
-      ))}
+      {analysis.methods.map((m, i) => {
+        const ranges = itemSources(m, segments);
+        return (
+          <article
+            className="card"
+            key={i}
+            data-source-ids={ranges.flatMap((r) => r.ids).join(' ')}
+            data-excerpt-title={m.title}
+          >
+            <SourceHeading title={m.title} ranges={ranges} jump={jump} />
+            {m.steps ? (
+              <>
+                <AnalysisList title="适用情况" value={m.applicability} />
+                <strong>具体做法</strong>
+                <ol className="analysis-list">
+                  {m.steps.map((step, index) => (
+                    <li key={index}>{step}</li>
+                  ))}
+                </ol>
+                <AnalysisList title="条件与限制" value={m.limitations} />
+              </>
+            ) : (
+              <p>{m.description}</p>
+            )}
+            <ExtraSources ranges={ranges} jump={jump} />
+          </article>
+        );
+      })}
+      {!analysis.methods.length && (
+        <p className="muted">未提取到有足够具体做法的方法。</p>
+      )}
     </>
   );
 }
