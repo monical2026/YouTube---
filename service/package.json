@@ -1,7 +1,7 @@
 {
   "name": "@youtube-note/service",
   "private": true,
-  "version": "0.3.9",
+  "version": "0.4.1",
   "type": "module",
   "dependencies": {
     "@youtube-note/shared": "workspace:*",

@@ -44,6 +44,12 @@ Object.defineProperty(window, 'chrome', { configurable: true, value: {
       try {
         const r = requestSchema.parse(input);
         if (r.type === 'listHistory') return { data: { entries: [...records.values()].map(historyEntry), invalidCount: 0 } };
+        if (r.type === 'deleteHistory') {
+          if (failSave) throw new Error('模拟删除失败，记录仍保留');
+          records.delete(r.videoId);
+          listeners.forEach(fn => fn({ type: 'recordChanged', videoId: r.videoId, revision: 999 }));
+          return { data: true };
+        }
         if (r.type === 'load') return { data: structuredClone(records.get(r.videoId)) };
         if (r.type === 'save') {
           if (failSave) throw new Error('模拟写入失败，输入仍保留');

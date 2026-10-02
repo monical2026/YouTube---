@@ -318,3 +318,9 @@ questionRequestSchema 新增可选 answerInstructions，长度上限 2000 字符
 ## 0.3.1 新版脉络协议与复核
 
 从本版起，以 [脉络内容规范](analysis-content-design.md) 的生成/兼容规则为准。旧版按标题机械合并与仅压缩摘要被新版全片复核替代。新增字段为可选以读取旧记录，新生成 v3 另外严格校验要点、等级、方法步骤和范围；不修改数据库版本或已有迁移。
+
+### 0.4.1 删除与旧窗口保护
+
+新增 UI 专用 deleteHistory RPC，videoId 严格校验，复用后台插件页面来源检查。IndexedDB 同一 readwrite 事务将视频内容替换为空记录标记：只保留 videoId、递增 revision/deletionEpoch 及空字段，deleted=true 在目录中过滤；原逐字稿、翻译、备份、脉络、笔记和 AI 会话不保留。不是软删除/回收站。
+
+recordSchema 新增 deletionEpoch（旧数据缺失时默认 0，不改已发布迁移）。保存同时比较修订号和删除代次；useVideo 保留首次加载时的代次，修改/笔记保存前核对，避免旧窗口加载新版本后复活旧内容。字幕缓存任务也检查抓取前后的删除代次。重新打开视频后可开始新的学习记录。删除后沿用 recordChanged 通知刷新其他窗口。

@@ -64,3 +64,13 @@ it('字幕保存遇到笔记更新冲突只重试保存，不重新抓字幕', a
   expect(record.title).toBe('其他窗口更新');
   expect(record.segments).toHaveLength(1);
 });
+it('字幕请求期间删除记录后，不保存迟到的字幕，也不重试恢复', async () => {
+  let record = recordSchema.parse({ videoId: 'v', title: '', revision: 0, segments: [], notes: [], analysis: null });
+  const save = vi.fn(async (next: typeof record) => next);
+  const cache = createCaptionCache(async () => structuredClone(record), save);
+  await expect(cache('v', async () => {
+    record = { ...record, deletionEpoch: 1, revision: 1 };
+    return [segmentSchema.parse({ id: 's', original: 'late', startMs: 0, endMs: 1000 })];
+  })).rejects.toThrow('已删除');
+  expect(save).not.toHaveBeenCalled();
+});

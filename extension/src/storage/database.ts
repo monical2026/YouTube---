@@ -25,6 +25,7 @@ export async function load(videoId: string): Promise<VideoRecord> {
             ? recordSchema.parse(r.result)
             : {
                 videoId,
+                deletionEpoch: 0,
                 title: '',
                 revision: 0,
                 segments: [],
@@ -58,7 +59,10 @@ export async function save(
         return;
       }
       const current = get.result ? recordSchema.parse(get.result).revision : 0;
-      if (current !== expected) {
+      if (
+        current !== expected ||
+        (parsed.success && parsed.data.deletionEpoch !== record.deletionEpoch)
+      ) {
         conflict = true;
         tx.abort();
         return;
@@ -93,12 +97,47 @@ export async function listHistory(): Promise<{
       const cursor = request.result;
       if (!cursor) return;
       const parsed = recordSchema.safeParse(cursor.value);
-      if (parsed.success) entries.push(historyEntry(parsed.data));
-      else invalidCount++;
+      if (parsed.success && cursor.value.deleted !== true)
+        entries.push(historyEntry(parsed.data));
+      else if (parsed.success) {
+        cursor.continue();
+        return;
+      } else invalidCount++;
       cursor.continue();
     };
     tx.oncomplete = () => resolve({ entries, invalidCount });
     tx.onerror = () => reject(new Error('读取历史记录失败，请重试'));
     tx.onabort = () => reject(new Error('读取历史记录已中断，请重试'));
+  });
+}
+
+// Retain only an empty revision marker so stale windows cannot restore deleted content.
+export async function deleteHistory(videoId: string): Promise<VideoRecord> {
+  const db = await open();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('videos', 'readwrite');
+    const store = tx.objectStore('videos');
+    const request = store.get(videoId);
+    let empty: VideoRecord;
+    request.onsuccess = () => {
+      const parsed = recordSchema.safeParse(request.result);
+      if (!parsed.success) {
+        tx.abort();
+        return;
+      }
+      empty = recordSchema.parse({
+        videoId,
+        title: '',
+        revision: parsed.data.revision + 1,
+        deletionEpoch: parsed.data.deletionEpoch + 1,
+        segments: [],
+        notes: [],
+        analysis: null,
+      });
+      store.put({ ...empty, deleted: true });
+    };
+    tx.oncomplete = () => resolve(empty);
+    tx.onabort = () => reject(new Error('删除失败，记录未删除，请刷新后重试'));
+    tx.onerror = () => reject(new Error('删除记录失败，请重试'));
   });
 }

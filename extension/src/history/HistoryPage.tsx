@@ -55,6 +55,13 @@ export function HistoryPage() {
               retainHistoryDates(previous, list.entries),
             );
           setInvalidCount(list.invalidCount);
+          if (!initial)
+            setSelected((previous) =>
+              previous &&
+              list.entries.some((entry) => entry.videoId === previous.videoId)
+                ? previous
+                : null,
+            );
         }
         if (initial) {
           const stored = await chrome.storage.local.get([
@@ -151,6 +158,35 @@ export function HistoryPage() {
       setSwitching(false);
     }
   }
+  async function remove(videoId: string, title: string) {
+    if (switchLock.current) return;
+    if (
+      !window.confirm(
+        `确定删除“${title}”？\n该视频的逐字稿、视频脉络和全部笔记（包括草稿与 AI 回答）都会删除，无法撤销。`,
+      )
+    )
+      return;
+    switchLock.current = true;
+    setSwitching(true);
+    try {
+      await rpc({ type: 'deleteHistory', videoId });
+      setEntries((previous) =>
+        previous.filter((entry) => entry.videoId !== videoId),
+      );
+      if (selected?.videoId === videoId) {
+        setSelected(null);
+        const url = new URL(location.href);
+        url.searchParams.delete('video');
+        window.history.replaceState(null, '', url);
+      }
+      setError('');
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      switchLock.current = false;
+      setSwitching(false);
+    }
+  }
   return (
     <div className={`history-layout ${collapsed ? 'history-collapsed' : ''}`}>
       <div className="history-appbar">
@@ -193,6 +229,7 @@ export function HistoryPage() {
           opened,
           listingDates,
           select,
+          remove,
         }}
         selectedId={selected?.videoId}
       />

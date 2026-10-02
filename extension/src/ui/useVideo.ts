@@ -22,6 +22,7 @@ export function useVideo(historyVideoId?: string) {
   const current = useRef(record);
 
   const videoId = useRef('');
+  const sessionEpoch = useRef(0);
   const queue = useRef<Promise<unknown>>(Promise.resolve());
   useEffect(() => {
     let disposed = false;
@@ -97,6 +98,7 @@ export function useVideo(historyVideoId?: string) {
           if (!disposed && videoId.current === ctx.videoId) {
             const loaded = recordSchema.parse(data);
             if (loaded.revision < (current.current?.revision ?? -1)) return;
+            sessionEpoch.current = loaded.deletionEpoch;
             current.current = loaded;
             setRecord(loaded);
           }
@@ -112,6 +114,7 @@ export function useVideo(historyVideoId?: string) {
           if (disposed) return;
           const loaded = recordSchema.parse(data);
           if (loaded.revision < (current.current?.revision ?? -1)) return;
+          sessionEpoch.current = loaded.deletionEpoch;
           current.current = loaded;
           setRecord(loaded);
         })
@@ -146,6 +149,8 @@ export function useVideo(historyVideoId?: string) {
           const before = recordSchema.parse(
             await rpc({ type: 'load', videoId: target }),
           );
+          if (before.deletionEpoch !== sessionEpoch.current)
+            throw new Error('这条视频记录已删除，请关闭并重新打开页面后操作');
           if (videoId.current !== target)
             throw new Error('视频已切换，操作已停止');
           const after = recordSchema.parse(
@@ -173,6 +178,8 @@ export function useVideo(historyVideoId?: string) {
         const fresh = recordSchema.parse(
           await rpc({ type: 'load', videoId: note.videoId }),
         );
+        if (fresh.deletionEpoch !== sessionEpoch.current)
+          throw new Error('这条视频记录已删除，旧笔记不能重新保存');
         const existing = fresh.notes.find((n) => n.id === note.id);
         // 只替换指定笔记，不回写旧逐字稿；同一笔记的版本冲突留给用户处理。
         const local = current.current?.notes.find((n) => n.id === note.id);

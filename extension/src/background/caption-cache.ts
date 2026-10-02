@@ -21,6 +21,8 @@ export function createCaptionCache(
     );
     for (let attempt = 0; attempt < 3; attempt++) {
       const current = await load(id);
+      if (current.deletionEpoch !== cached.deletionEpoch)
+        throw new Error('视频记录已删除，本次字幕任务已停止');
       if (current.segments.length) return current.segments;
       try {
         return (await save({ ...current, segments }, current.revision))

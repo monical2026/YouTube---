@@ -67,3 +67,38 @@ it('旧版记录无需重写即可列出，异常项只报告计数且不删除�
   await expect(load('invalid')).rejects.toThrow('原数据未修改');
   db.close();
 });
+
+it('删除整条历史记录，保留空版本标记阻止旧窗口恢复，允许重新学习', async () => {
+  const { deleteHistory, listHistory } = await import('../../extension/src/storage/database');
+  const original = await load('delete00001');
+  const saved = await save({ ...original, title: '待删除视频', segments: [{ id: 's', startMs: 0, endMs: 1000, original: 'text', translated: '', revision: 0, engine: 'none' }] }, original.revision);
+  const empty = await deleteHistory(saved.videoId);
+  expect(empty.segments).toEqual([]);
+  expect(empty.notes).toEqual([]);
+  expect(empty.analysis).toBeNull();
+  expect(empty.title).toBe('');
+  expect(empty.deletionEpoch).toBe(1);
+  expect((await listHistory()).entries.some(e => e.videoId === saved.videoId)).toBe(false);
+  await expect(save(saved, saved.revision)).rejects.toThrow('另一窗口');
+  await expect(save(saved, empty.revision)).rejects.toThrow('另一窗口');
+  expect(await load(saved.videoId)).toEqual(empty);
+  await save({ ...empty, title: '重新学习' }, empty.revision);
+  expect((await listHistory()).entries.find(e => e.videoId === saved.videoId)?.title).toBe('重新学习');
+});
+it('删除不存在记录失败，不影响其他视频', async () => {
+  const { deleteHistory } = await import('../../extension/src/storage/database');
+  await expect(deleteHistory('missing0001')).rejects.toThrow('删除失败');
+  expect((await load('video-a')).title).toBe('视频 A');
+});
+it('删除同时清除笔记 AI 回答与逐字稿备份，其他视频保留', async () => {
+  const { deleteHistory, listHistory } = await import('../../extension/src/storage/database');
+  const source = await load('learning-storage');
+  expect(source.notes[0].aiConversation).toHaveLength(1);
+  await save({ ...source, transcriptBackup: { segments: [], savedAt: 1 } }, source.revision);
+  const removed = await deleteHistory(source.videoId);
+  expect(removed.notes).toEqual([]);
+  expect(removed.transcriptBackup).toBeUndefined();
+  expect(JSON.stringify(removed)).not.toContain('模型补充');
+  expect((await listHistory()).entries.some(e => e.videoId === source.videoId)).toBe(false);
+  expect((await load('video-a')).title).toBe('视频 A');
+});

@@ -36,6 +36,7 @@ type Props = {
   opened: Record<string, number>;
   listingDates: Record<string, number>;
   selectedId?: string;
+  remove: (videoId: string, title: string) => Promise<void>;
   select: (videoId: string, noteId?: string) => Promise<void>;
 };
 export function HistorySidebar({
@@ -50,6 +51,7 @@ export function HistorySidebar({
   listingDates,
   selectedId,
   select,
+  remove,
 }: Props) {
   return (
     <aside className="history-sidebar" aria-label="视频历史列表">
@@ -130,6 +132,25 @@ export function HistorySidebar({
                       </span>
                       <HistoryRecordMeta entry={entry} date={date} />
                     </span>
+                  </button>
+                  <button
+                    className="history-delete"
+                    title="删除视频记录"
+                    aria-label={`删除 ${entry.title}`}
+                    disabled={switching}
+                    onClick={() => void remove(entry.videoId, entry.title)}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      aria-hidden="true"
+                    >
+                      <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7m4-7v7" />
+                    </svg>
                   </button>
                   {!!hits.length && (
                     <div className="history-hits">

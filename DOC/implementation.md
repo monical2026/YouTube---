@@ -204,3 +204,7 @@ HistoryRecordMeta.tsx 提取只读元信息展示，HistoryPage.tsx 接入该组
 ### 0.3.9 历史页内容切换按钮收紧
 
 逐字稿／视频脉络／笔记：桌面按钮内边距改为上下 8px、左右 14px，行高 21px，实际高度 37px；整组高度由 47px 改为 45px。字号仍为 13px、字重选中 600/未选中 400。窄屏原本即 37px，保留左右 10px 内边距。中文／英文／中英按钮不变。
+
+## 0.4.1 历史记录删除
+
+HistorySidebar 增加图标入口，HistoryPage 负责确认和成功/失败状态；shared requestSchema 与后台同步新增 deleteHistory；database 事务清除内容并保留空版本标记。useVideo 和 caption-cache 使用 deletionEpoch 阻止旧任务回写。无需新依赖或数据库升级。源码版本统一 0.4.1，待用户验收，未提交推送。

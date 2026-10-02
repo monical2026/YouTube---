@@ -110,6 +110,7 @@ export const noteSchema = z.object({
 export type Note = z.infer<typeof noteSchema>;
 export { analysisSchema, type Analysis } from './analysis-schema';
 export const recordSchema = z.object({
+  deletionEpoch: z.number().int().nonnegative().default(0),
   updatedAt: z.number().nonnegative().optional(),
   transcriptBackup: z
     .object({
@@ -170,6 +171,10 @@ export const requestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('getContext'), tabId: z.number().optional() }),
   z.object({ type: z.literal('load'), videoId: z.string() }),
   z.object({ type: z.literal('listHistory') }),
+  z.object({
+    type: z.literal('deleteHistory'),
+    videoId: z.string().regex(/^[\w-]{11}$/),
+  }),
   z.object({
     type: z.literal('openHistory'),
     videoId: z

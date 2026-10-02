@@ -4,7 +4,7 @@ import { matchesExtensionPage } from './origin';
 import { z } from 'zod';
 import { requestSchema, type VideoContext } from '@youtube-note/shared';
 import { openHistory, openVideoTime } from './history';
-import { load, save, listHistory } from '../storage/database';
+import { load, save, listHistory, deleteHistory } from '../storage/database';
 import { parseCaptions, currentSegment } from '../segmentation';
 import { native } from './native-client';
 const contexts = new Map<number, VideoContext>();
@@ -152,6 +152,11 @@ async function handle(
       context: tabId === undefined ? null : (contexts.get(tabId) ?? null),
       tabId,
     };
+  if (r.type === 'deleteHistory') {
+    const removed = await deleteHistory(r.videoId);
+    recordChanged(removed.videoId, removed.revision);
+    return true;
+  }
   if (r.type === 'listHistory') return listHistory();
   if (r.type === 'openHistory') return openHistory(r.videoId);
   if (r.type === 'openVideoTime') return openVideoTime(r.videoId, r.startMs);
