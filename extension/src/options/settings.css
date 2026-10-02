@@ -262,3 +262,13 @@
   color: var(--accent);
   font-weight: 600;
 }
+
+.settings #shortcuts kbd {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
