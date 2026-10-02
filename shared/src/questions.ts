@@ -1,8 +1,9 @@
+import { videoIdSchema } from './video-source';
 import { z } from 'zod';
 export const questionRequestSchema = z
   .object({
     task: z.literal('ask'),
-    videoId: z.string().regex(/^[\w-]{11}$/),
+    videoId: videoIdSchema,
     question: z.string().trim().min(1).max(4000),
     excerpt: z.string().max(12000),
     answerInstructions: z.string().trim().max(2000).optional(),

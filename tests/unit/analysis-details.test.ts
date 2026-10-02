@@ -125,3 +125,13 @@ it('知识清单数组跨批次合并仍保留逐条结构，兼容旧文本', (
   expect(merged.knowledge![0].understanding).toEqual(['定义', '条件', '区别']);
   expect(merged.knowledge![0].role).toEqual(['解释选择', '提供依据']);
 });
+
+it('中文金句按原稿复制，不把中文再次译写内容当双语展示', () => {
+  const quote = { segmentId: 'a', original: '保留原始中文。', chinese: '模型改写的中文。' };
+  const source = { id:'a',startMs:0,endMs:1000,original:quote.original,sourceLanguage:'zh',translated:'',revision:0,manual:false,engine:'' };
+  expect(quoteText(quote,'bilingual',source)).toBe(quote.original);
+  const record = recordSchema.parse({videoId:'bilibili-BV1qW411N7FU-40809285-p2',title:'测试',revision:0,notes:[],segments:[source],analysis:{formatVersion:3,summary:'摘要',topics:[],quotes:[quote],methods:[]}});
+  const text=exportBlocks(record,'bilingual',['analysis']).map(b=>b.text).join('\n');
+  expect(text).toContain(quote.original);
+  expect(text).not.toContain(quote.chinese);
+});

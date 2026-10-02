@@ -1,5 +1,12 @@
-import { timestamp, type VideoRecord, type Mode } from '@youtube-note/shared';
+import {
+  readingMode,
+  videoUrl,
+  timestamp,
+  type VideoRecord,
+  type Mode,
+} from '@youtube-note/shared';
 export function transcriptText(record: VideoRecord, mode: Mode): string {
+  mode = readingMode(record.segments, mode);
   return record.segments
     .map(
       (s) =>
@@ -13,7 +20,7 @@ export function notesMarkdown(record: VideoRecord): string {
     record.notes
       .map(
         (n) =>
-          `## [${timestamp(n.startMs)}](https://www.youtube.com/watch?v=${record.videoId}&t=${Math.floor(n.startMs / 1000)})${n.draft ? ' · 草稿' : ''}\n\n${n.selectedText !== undefined ? `> ${(n.excerptMarkdown ?? n.selectedText).replaceAll('\n', '\n> ')}\n\n` : ''}${n.selectedText !== undefined ? '' : n.original}\n\n${n.selectedText !== undefined ? '' : n.translated}\n\n${n.thought ? `💡 ${n.thought}\n\n` : ''}${n.question ? `❓ ${n.question}\n` : ''}`,
+          `## [${timestamp(n.startMs)}](${videoUrl(record.videoId, n.startMs).replace(/(\d+)s$/, '$1')})${n.draft ? ' · 草稿' : ''}\n\n${n.selectedText !== undefined ? `> ${(n.excerptMarkdown ?? n.selectedText).replaceAll('\n', '\n> ')}\n\n` : ''}${n.selectedText !== undefined ? '' : n.original}\n\n${n.selectedText !== undefined ? '' : n.translated}\n\n${n.thought ? `💡 ${n.thought}\n\n` : ''}${n.question ? `❓ ${n.question}\n` : ''}`,
       )
       .join('\n')
   );

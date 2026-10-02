@@ -1,4 +1,4 @@
-import { supportedUrl } from './shortcuts';
+import { matchesVideoPage, videoUrl } from '@youtube-note/shared';
 export async function openHistory(videoId?: string) {
   const query = new URLSearchParams({ history: '1' });
   if (videoId) query.set('video', videoId);
@@ -9,17 +9,10 @@ export async function openHistory(videoId?: string) {
 }
 export async function openVideoTime(videoId: string, startMs?: number) {
   const tabs = await chrome.tabs.query({
-    url: 'https://www.youtube.com/watch*',
+    url: ['https://www.youtube.com/watch*', 'https://www.bilibili.com/video/*'],
   });
-  const target = tabs.find(
-    (tab) =>
-      supportedUrl(tab.url) &&
-      new URL(tab.url!).searchParams.get('v') === videoId,
-  );
-  const url = new URL('https://www.youtube.com/watch');
-  url.searchParams.set('v', videoId);
-  if (startMs !== undefined)
-    url.searchParams.set('t', `${Math.floor(startMs / 1000)}s`);
+  const target = tabs.find((tab) => matchesVideoPage(tab.url, videoId));
+  const url = new URL(videoUrl(videoId, startMs));
   if (target?.id !== undefined) {
     if (startMs !== undefined) {
       let sought = false;

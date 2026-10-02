@@ -177,3 +177,32 @@ it('真实内容脚本收到跳转请求后立即广播新位置，无需推进�
   document.dispatchEvent(new Event('seeked'));
   expect(chrome.runtime.sendMessage).toHaveBeenCalledTimes(1);
 });
+
+it('B 站 P2→P1→P2 反复切换撤下旧面板，不累积监听器或把笔记定位到另一 P', async () => {
+  const scope=globalThis as typeof globalThis & {__youtubeNoteDispose?:()=>void};
+  scope.__youtubeNoteDispose?.();
+  vi.resetModules();
+  const documentEvents = new EventTarget();
+  vi.stubGlobal('document', {
+    addEventListener: documentEvents.addEventListener.bind(documentEvents),
+    createElement:(tag:string)=>new NodeElement(tag),
+    body:new NodeElement('body',true),
+    querySelector:(selector:string)=>selector==='.right-container'?secondary:selector==='.video-toolbar-container'?below:selector==='video'?{currentTime:0,paused:true,play:vi.fn(async()=>{})}:undefined,
+  });
+  const base='https://www.bilibili.com/video/BV1qW411N7FU/';
+  vi.stubGlobal('location',{pathname:'/video/BV1qW411N7FU/',href:base+'?p=2'});
+  await import('../../extension/src/content/index');
+  for(let i=0;i<20;i++){
+    const p=i%2+1;
+    vi.stubGlobal('location',{pathname:'/video/BV1qW411N7FU/',href:base+'?p='+p});
+    pageWindow.dispatchEvent(new CustomEvent('youtube-note-metadata',{detail:'null'}));
+    await vi.advanceTimersByTimeAsync(400);
+    expect(below.children).toHaveLength(0);
+    pageWindow.dispatchEvent(new CustomEvent('youtube-note-metadata',{detail:JSON.stringify({videoId:`bilibili-BV1qW411N7FU-${p===1?'40809259':'40809285'}-p${p}`,title:'分 P',durationMs:1000,live:false,tracks:[]})}));
+    await vi.advanceTimersByTimeAsync(400);
+    below.children[0].onclick!();
+    expect(secondary.children).toHaveLength(1);
+    expect(listeners.size).toBe(1);
+    expect(vi.getTimerCount()).toBe(1);
+  }
+});

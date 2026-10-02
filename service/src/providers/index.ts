@@ -62,7 +62,7 @@ export async function translate(profile: Profile, segments: Segment[]) {
         decode(
           await llm(
             profile,
-            `把以下英文片段翻译成简体中文，保留含义、否定、数字和术语。只输出 JSON 数组 [{"id":"原 id","text":"译文"}]，每段恰好一条。\n${JSON.stringify(batch.map((s) => ({ id: s.id, text: s.original })))}`,
+            `把以下片段中的外语翻译成简体中文，已有中文保持原意，保留含义、否定、数字和术语。只输出 JSON 数组 [{"id":"原 id","text":"译文"}]，每段恰好一条。\n${JSON.stringify(batch.map((s) => ({ id: s.id, text: s.original })))}`,
           ),
         ),
       );
@@ -88,6 +88,7 @@ export async function transcript(profile: Profile, videoId: string) {
   url.searchParams.set('mode', 'native');
   const data = z
     .object({
+      lang: z.string().max(30).optional(),
       content: z.array(
         z.object({
           text: z.string(),
@@ -103,6 +104,7 @@ export async function transcript(profile: Profile, videoId: string) {
       startMs: cue.offset,
       endMs: cue.offset + cue.duration,
       original: cue.text,
+      sourceLanguage: data.lang,
     }),
   );
 }

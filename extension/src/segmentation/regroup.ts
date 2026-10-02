@@ -200,5 +200,10 @@ export function prepareSegments(segments: Segment[]): Segment[] {
     return segments;
   if (segments.some((s) => s.manual || s.translated))
     throw new Error('已有编辑或译文，请使用重新分段预览');
-  return groupCues(recoverCues(segments));
+  const language = segments[0]?.sourceLanguage;
+  return groupCues(recoverCues(segments)).map((s) =>
+    language && segments.every((part) => part.sourceLanguage === language)
+      ? { ...s, sourceLanguage: language }
+      : s,
+  );
 }

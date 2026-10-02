@@ -1,6 +1,7 @@
 import { applyTranslations } from './translation-results';
 import { z } from 'zod';
 import {
+  transcriptLanguage,
   segmentSchema,
   analysisSchema,
   sourceVersion,
@@ -73,11 +74,11 @@ export function videoActions({
     });
   }
   async function translateLocal() {
-    if (!record) return;
+    if (!record || transcriptLanguage(record.segments) === 'zh') return;
     await run('正在准备本地翻译…', async (token) => {
       const translator = await createLocal((value) => {
         if (token === generation.current) setProgress(value);
-      });
+      }, transcriptLanguage(record.segments));
       try {
         const pending = record.segments.filter(
           (s) => !s.translated && !s.manual,
@@ -111,7 +112,8 @@ export function videoActions({
     });
   }
   async function llmTranslate(scope: 'current' | 'all' = 'current') {
-    if (!record || !context) return;
+    if (!record || !context || transcriptLanguage(record.segments) === 'zh')
+      return;
     const current = currentSegment(record.segments, context.currentMs);
     const segments =
       scope === 'all' ? record.segments : current ? [current] : [];

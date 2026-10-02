@@ -35,6 +35,7 @@ for (const [name, entry, format] of [
   ['background', 'background/index.ts', 'es'],
   ['content', 'content/index.ts', 'iife'],
   ['bridge', 'content/bridge.ts', 'iife'],
+  ['bilibili-bridge', 'content/bilibili-bridge.ts', 'iife'],
 ]) {
   await build({
     configFile: false,
@@ -43,7 +44,7 @@ for (const [name, entry, format] of [
       emptyOutDir: false,
       lib: {
         entry: resolve(root, `extension/src/${entry}`),
-        name: `YouTubeNote_${name}`,
+        name: `YouTubeNote_${name.replaceAll('-', '_')}`,
         formats: [format],
         fileName: () => `${name}.js`,
       },

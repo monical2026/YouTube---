@@ -1,3 +1,10 @@
+import { fetchCaptions } from './captions';
+import {
+  pageSource,
+  matchesVideoPage,
+  videoSource,
+  videoUrl,
+} from '@youtube-note/shared';
 import { exportDownloadUrl, exportDownloadFilename } from './download-export';
 import { captureShortcut, supportedUrl } from './shortcuts';
 import { createCaptionCache } from './caption-cache';
@@ -6,7 +13,7 @@ import { z } from 'zod';
 import { requestSchema, type VideoContext } from '@youtube-note/shared';
 import { openHistory, openVideoTime } from './history';
 import { load, save, listHistory, deleteHistory } from '../storage/database';
-import { parseCaptions, currentSegment } from '../segmentation';
+import { currentSegment } from '../segmentation';
 import { native } from './native-client';
 const contexts = new Map<number, VideoContext>();
 const ports = new Set<chrome.runtime.Port>();
@@ -50,35 +57,7 @@ async function captions(videoId: string, tabId: number) {
   if (context?.videoId !== videoId) throw new Error('视频已切换，请重新打开');
   const cached = await load(videoId);
   if (cached.segments.length) return cached.segments;
-  const tracks = [...context.tracks].sort(
-    (a, b) =>
-      (b.language === 'en' ? 2 : 0) -
-      (a.language === 'en' ? 2 : 0) +
-      (a.automatic ? 1 : 0) -
-      (b.automatic ? 1 : 0),
-  );
-  for (const track of tracks.slice(0, 2)) {
-    try {
-      const url = new URL(track.url);
-      if (
-        url.origin !== 'https://www.youtube.com' ||
-        url.pathname !== '/api/timedtext'
-      )
-        continue;
-      url.searchParams.set('fmt', 'json3');
-      const response = await fetch(url, {
-        signal: AbortSignal.timeout(15000),
-        credentials: 'include',
-      });
-      if (!response.ok) continue;
-      const data: unknown = await response.json();
-      const segments = parseCaptions(data);
-      if (segments.length) return segments;
-    } catch {
-      /* 当前轨道失败后尝试下一条；最终失败在服务入口显示。 */
-    }
-  }
-  return native('transcript', { videoId, mode: 'native' });
+  return fetchCaptions(context, tabId);
 }
 async function capture(tabId: number) {
   const context = contexts.get(tabId);
@@ -123,7 +102,10 @@ async function handle(
   if (
     r.type === 'invalidate' &&
     sender.frameId === 0 &&
-    sender.url?.startsWith('https://www.youtube.com/') &&
+    !!sender.url &&
+    ['https://www.youtube.com', 'https://www.bilibili.com'].includes(
+      new URL(sender.url).origin,
+    ) &&
     tabId !== undefined
   ) {
     contexts.delete(tabId);
@@ -131,13 +113,9 @@ async function handle(
     return true;
   }
   if (r.type === 'context') {
-    if (
-      !sender.url?.startsWith('https://www.youtube.com/watch?') ||
-      sender.frameId !== 0 ||
-      tabId === undefined
-    )
+    if (!pageSource(sender.url) || sender.frameId !== 0 || tabId === undefined)
       throw new Error('视频来源无效');
-    if (new URL(sender.url).searchParams.get('v') !== r.context.videoId)
+    if (!matchesVideoPage(sender.url, r.context.videoId))
       throw new Error('视频上下文不一致');
     contexts.set(tabId, r.context);
     broadcast(tabId, r.context);
@@ -202,11 +180,11 @@ async function handle(
         /* 原标签已关闭，下面重新打开。 */
       }
     }
-    const url = `https://www.youtube.com/watch?v=${r.videoId}`;
+    const url = videoUrl(r.videoId);
     if (
       !target?.id ||
       !target.url ||
-      new URL(target.url).searchParams.get('v') !== r.videoId
+      !matchesVideoPage(target.url, r.videoId)
     ) {
       await chrome.tabs.create({ url });
     } else {
@@ -224,6 +202,8 @@ async function handle(
       const payload = z
         .object({ videoId: z.string(), durationMs: z.number() })
         .parse(r.payload);
+      if (videoSource(payload.videoId).platform !== 'youtube')
+        throw new Error('此平台的音频转写尚未接入');
       const ctx = tabId === undefined ? null : contexts.get(tabId);
       if (
         !ctx ||
@@ -256,10 +236,15 @@ chrome.commands.onCommand.addListener((command, tab) => {
   });
 });
 async function restoreContent(tabId: number) {
+  const tab = await chrome.tabs.get(tabId);
   await chrome.scripting.executeScript({
     target: { tabId },
     world: 'MAIN',
-    files: ['bridge.js'],
+    files: [
+      pageSource(tab.url)?.platform === 'bilibili'
+        ? 'bilibili-bridge.js'
+        : 'bridge.js',
+    ],
   });
   await chrome.scripting.executeScript({
     target: { tabId },
@@ -293,15 +278,18 @@ chrome.action.onClicked.addListener((tab) => {
 });
 chrome.runtime.onInstalled.addListener(() => {
   void chrome.tabs
-    .query({ url: 'https://www.youtube.com/watch*' })
+    .query({
+      url: [
+        'https://www.youtube.com/watch*',
+        'https://www.bilibili.com/video/*',
+      ],
+    })
     .then(async (tabs) => {
       for (const tab of tabs)
         if (tab.id !== undefined && supportedUrl(tab.url))
           await restoreContent(tab.id);
     })
-    .catch(() =>
-      chrome.action.setTitle({ title: '点击图标恢复当前 YouTube 视频入口' }),
-    );
+    .catch(() => chrome.action.setTitle({ title: '点击图标恢复当前视频入口' }));
 });
 chrome.tabs.onRemoved.addListener((id) => contexts.delete(id));
 chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {

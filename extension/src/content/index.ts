@@ -1,4 +1,8 @@
-import { contextSchema, type VideoContext } from '@youtube-note/shared';
+import {
+  contextSchema,
+  matchesVideoPage,
+  type VideoContext,
+} from '@youtube-note/shared';
 import { seekPlayback } from './seek-playback';
 import { createRuntimeSession } from './runtime-session';
 const previous = globalThis as typeof globalThis & {
@@ -45,13 +49,14 @@ function frameHost(noteId?: string): HTMLElement {
   host.style.cssText = noteId
     ? 'position:fixed;right:24px;bottom:24px;width:400px;max-width:95vw;height:440px;z-index:2147483000;box-shadow:0 12px 36px #0004;border-radius:14px'
     : 'width:100%;max-width:560px;min-width:320px;height: min(780px,85vh);margin-bottom:16px';
+  // B 站右栏禁用指针事件；Shadow DOM 仍会继承，需在插件宿主恢复交互。
+  host.style.pointerEvents = 'auto';
   return host;
 }
 function validVideo(): boolean {
   return (
-    location.pathname === '/watch' &&
     !!metadata &&
-    new URL(location.href).searchParams.get('v') === metadata.videoId &&
+    matchesVideoPage(location.href, metadata.videoId) &&
     !metadata.live
   );
 }
@@ -63,7 +68,7 @@ function showPanel() {
     collapsedBar.style.cssText =
       'align-items:center;justify-content:space-between;padding:8px 12px;background:#f5f5fa;color:#242630;border:1px solid #e4e7f0;border-radius:12px;font:14px system-ui';
     const name = document.createElement('span');
-    name.textContent = 'YouTube 学习笔记';
+    name.textContent = '学习笔记';
     const expand = document.createElement('button');
     expand.textContent = '展开';
     expand.style.cssText =
@@ -75,6 +80,7 @@ function showPanel() {
   if (!panel.isConnected) {
     const target =
       document.querySelector('#secondary-inner') ??
+      document.querySelector('.right-container') ??
       document.querySelector('#below');
     if (!target) return;
     target.prepend(panel);
@@ -95,7 +101,9 @@ function alignPanel() {
   panel.style.transform = '';
   panel.style.marginBottom = '16px';
   const player = (
-      document.querySelector('#player') ?? video
+      document.querySelector('#player') ??
+      document.querySelector('#bilibili-player') ??
+      video
     ).getBoundingClientRect(),
     side = panel.getBoundingClientRect();
   // 只在双栏布局调整右栏顶部，影院模式或窄屏不移动到播放器区域。
@@ -131,8 +139,14 @@ window.addEventListener(
     if (!(event instanceof CustomEvent) || typeof event.detail !== 'string')
       return;
     try {
+      const data: unknown = JSON.parse(event.detail);
+      if (data === null) {
+        metadata = undefined;
+        return;
+      }
+      if (!data || typeof data !== 'object') return;
       const parsed = contextSchema.parse({
-        ...JSON.parse(event.detail),
+        ...data,
         currentMs: 0,
         playing: false,
         ad: false,
@@ -252,7 +266,8 @@ const timer = setInterval(() => {
     button.onclick = showPanel;
     (
       document.querySelector('#below') ??
-      document.querySelector('ytd-watch-flexy')
+      document.querySelector('ytd-watch-flexy') ??
+      document.querySelector('.video-toolbar-container')
     )?.prepend(button);
     if (reopen) showPanel();
   }

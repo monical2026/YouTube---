@@ -1,3 +1,4 @@
+import { videoIdSchema } from '@youtube-note/shared';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import {
@@ -18,7 +19,7 @@ import { configDirectory } from './config';
 const execute = promisify(execFile);
 const targetSchema = z.object({ folder: z.string(), vault: z.string() });
 const exportSchema = z.object({
-  videoId: z.string().regex(/^[\w-]{11}$/),
+  videoId: videoIdSchema,
   title: z.string().max(1000),
   markdown: z.string().max(6_000_000),
   copy: z.boolean().default(false),

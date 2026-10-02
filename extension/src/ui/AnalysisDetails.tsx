@@ -2,7 +2,12 @@ import { itemSources } from './analysis-format';
 import { AnalysisList, ExtraSources, SourceHeading } from './AnalysisFields';
 import { copyText } from '../lib/clipboard';
 import { useState } from 'react';
-import { timestamp, type Analysis, type Segment } from '@youtube-note/shared';
+import {
+  transcriptLanguage,
+  timestamp,
+  type Analysis,
+  type Segment,
+} from '@youtube-note/shared';
 type Props = {
   analysis: Analysis;
   segments: Segment[];
@@ -12,7 +17,9 @@ type Quote = Analysis['quotes'][number];
 export function quoteText(
   quote: Quote,
   mode: 'bilingual' | 'chinese' | 'original',
+  source?: Segment,
 ) {
+  if (source && transcriptLanguage([source]) === 'zh') return quote.original;
   return mode === 'chinese'
     ? quote.chinese
     : mode === 'original'
@@ -30,14 +37,15 @@ function QuoteCard({
   sourceIds: string[];
   jump: (source: Segment) => void;
 }) {
+  const chineseOriginal = !!source && transcriptLanguage([source]) === 'zh';
   const [status, setStatus] = useState('');
   const [open, setOpen] = useState(false);
   async function copy(mode: 'bilingual' | 'chinese' | 'original') {
     setOpen(false);
     try {
-      await copyText(quoteText(quote, mode));
+      await copyText(quoteText(quote, mode, source));
       setStatus(
-        `已复制${mode === 'bilingual' ? '双语' : mode === 'chinese' ? '中文' : '原文'}`,
+        `已复制${chineseOriginal ? '原文' : mode === 'bilingual' ? '双语' : mode === 'chinese' ? '中文' : '原文'}`,
       );
     } catch (error) {
       setStatus(error instanceof Error ? error.message : '复制未完成，请重试');
@@ -59,8 +67,8 @@ function QuoteCard({
         <div className="quote-copy">
           <button
             className="quote-copy-icon"
-            title="复制双语"
-            aria-label="复制双语"
+            title={chineseOriginal ? '复制原文' : '复制双语'}
+            aria-label={chineseOriginal ? '复制原文' : '复制双语'}
             onClick={() => void copy('bilingual')}
           >
             <svg
@@ -76,15 +84,17 @@ function QuoteCard({
               <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" />
             </svg>
           </button>
-          <button
-            className="quote-copy-icon"
-            title="选择复制语言"
-            aria-label="选择复制语言"
-            aria-expanded={open}
-            onClick={() => setOpen(!open)}
-          >
-            ⌄
-          </button>
+          {!chineseOriginal && (
+            <button
+              className="quote-copy-icon"
+              title="选择复制语言"
+              aria-label="选择复制语言"
+              aria-expanded={open}
+              onClick={() => setOpen(!open)}
+            >
+              ⌄
+            </button>
+          )}
           {open && (
             <div
               className="quote-copy-menu"
@@ -99,7 +109,7 @@ function QuoteCard({
           )}
         </div>
       </div>
-      <p>{quote.chinese}</p>
+      {!chineseOriginal && <p>{quote.chinese}</p>}
       <p>{quote.original}</p>
       {quote.category === '关键事实' && (
         <small className="muted">讲者陈述，未独立核实</small>

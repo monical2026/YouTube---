@@ -15,6 +15,7 @@ interface TranslatorFactory {
 }
 export async function createLocal(
   onProgress: (value: number) => void,
+  sourceLanguage = 'en',
 ): Promise<LocalTranslator> {
   const factory = (
     globalThis as typeof globalThis & { Translator?: TranslatorFactory }
@@ -23,9 +24,9 @@ export async function createLocal(
     throw new Error(
       '此页面暂不能使用 Chrome 本地翻译。可打开独立阅读页，或主动选择 LLM 翻译。',
     );
-  const options = { sourceLanguage: 'en', targetLanguage: 'zh' };
+  const options = { sourceLanguage, targetLanguage: 'zh' };
   if ((await factory.availability(options)) === 'unavailable')
-    throw new Error('当前 Chrome 或设备不支持英中本地翻译');
+    throw new Error('当前 Chrome 或设备不支持该语言到中文的本地翻译');
   try {
     return await factory.create({
       ...options,

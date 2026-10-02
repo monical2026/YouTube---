@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Segment } from '@youtube-note/shared';
+import { transcriptLanguage, type Segment } from '@youtube-note/shared';
 import type { useVideo } from './useVideo';
 import { errorText } from '../lib/rpc';
 export function SegmentEditor({
@@ -41,11 +41,13 @@ export function SegmentEditor({
         value={draft.original}
         onChange={(e) => setDraft({ ...draft, original: e.target.value })}
       />
-      <textarea
-        aria-label="译文"
-        value={draft.translated}
-        onChange={(e) => setDraft({ ...draft, translated: e.target.value })}
-      />
+      {(transcriptLanguage([segment]) !== 'zh' || !!draft.translated) && (
+        <textarea
+          aria-label="译文"
+          value={draft.translated}
+          onChange={(e) => setDraft({ ...draft, translated: e.target.value })}
+        />
+      )}
       <p role="alert">{error}</p>
       <button disabled={saving} onClick={onClose}>
         取消

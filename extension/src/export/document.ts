@@ -1,6 +1,11 @@
 import { analysisBlocks } from './analysis';
 import { textItems } from '../ui/analysis-format';
-import { timestamp, type Mode, type VideoRecord } from '@youtube-note/shared';
+import {
+  videoUrl,
+  timestamp,
+  type Mode,
+  type VideoRecord,
+} from '@youtube-note/shared';
 import { transcriptText } from './index';
 export type ExportSection = 'transcript' | 'notes' | 'analysis';
 export type Block = { heading?: boolean; text: string; markdown?: string };
@@ -11,7 +16,7 @@ export function exportBlocks(
 ): Block[] {
   const blocks: Block[] = [
     { heading: true, text: record.title },
-    { text: `https://www.youtube.com/watch?v=${record.videoId}` },
+    { text: videoUrl(record.videoId) },
   ];
   if (sections.includes('transcript'))
     blocks.push(

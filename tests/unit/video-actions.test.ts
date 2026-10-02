@@ -229,3 +229,11 @@ it('错误的逐字稿字段在调用模型前报告请求不兼容且不泄露�
     }),
   ).toThrow('脉络请求格式不兼容，尚未调用模型');
 });
+
+it('中文原稿的本地和 LLM 翻译均不提交，保留原稿', async () => {
+  const state = setup([{ ...segment('0'), original: '中文原稿', sourceLanguage: 'zh' }]);
+  await state.actions.translateLocal();
+  await state.actions.llmTranslate('all');
+  expect(mockedRpc).not.toHaveBeenCalled();
+  expect(state.read().segments[0].translated).toBe('');
+});

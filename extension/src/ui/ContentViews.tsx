@@ -1,3 +1,4 @@
+import { videoSource } from '@youtube-note/shared';
 import { AnalysisList, ClipIcon, ClipOverview } from './AnalysisFields';
 import { AnalysisDetails } from './AnalysisDetails';
 import { NoteCard } from './NoteCard';
@@ -51,7 +52,10 @@ export function ContentViews({
             <p>
               {history
                 ? '这条记录尚未保存逐字稿，可返回原视频获取。'
-                : '自动获取未完成，可重试；无字幕时可使用下方生成选项。'}
+                : context &&
+                    videoSource(context.videoId).platform === 'bilibili'
+                  ? '已有字幕获取未完成，可登录 B 站后重试；本版尚不支持 B 站音频转写，仍可使用快捷键记笔记。'
+                  : '自动获取未完成，可重试；无字幕时可使用下方生成选项。'}
             </p>
             {!history && (
               <>

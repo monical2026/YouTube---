@@ -1,6 +1,13 @@
 import { SegmentEditor } from './SegmentEditor';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { type Mode, type Note, type Segment } from '@youtube-note/shared';
+import {
+  readingMode,
+  videoOrigin,
+  videoSource,
+  type Mode,
+  type Note,
+  type Segment,
+} from '@youtube-note/shared';
 import { useVideo } from './useVideo';
 import { rpc, errorText } from '../lib/rpc';
 import { currentSegment } from '../segmentation';
@@ -22,7 +29,7 @@ export function App({ history }: { history?: HistoryReader }) {
   const { context, record, tabId, error, setError, mutate, saveNote } =
     useVideo(history?.videoId);
   const [tab, setTab] = useState('transcript'),
-    [mode, setMode] = useState<Mode>('bilingual'),
+    [preferredMode, setMode] = useState<Mode>('bilingual'),
     [busy, setBusy] = useState(''),
     [progress, setProgress] = useState<number | null>(null),
     [follow, setFollow] = useState(true),
@@ -33,6 +40,7 @@ export function App({ history }: { history?: HistoryReader }) {
     { id: string; revision: number; text: string }[] | null
   >(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const mode = readingMode(record?.segments ?? [], preferredMode);
   const scroll = useRef<HTMLDivElement>(null);
   const { selected, setSelected, selectText } = useTextSelection(
     scroll,
@@ -194,7 +202,7 @@ export function App({ history }: { history?: HistoryReader }) {
     if (quickId)
       window.parent.postMessage(
         { type: 'close-note' },
-        'https://www.youtube.com',
+        videoOrigin(record?.videoId ?? context?.videoId ?? ''),
       );
   }
   if (quickId && edit && !asking)
@@ -260,7 +268,8 @@ export function App({ history }: { history?: HistoryReader }) {
               {tab === 'transcript' &&
                 context &&
                 record &&
-                !record.segments.length && (
+                !record.segments.length &&
+                videoSource(context.videoId).platform === 'youtube' && (
                   <GenerateCaptions
                     key={context.videoId}
                     context={context}

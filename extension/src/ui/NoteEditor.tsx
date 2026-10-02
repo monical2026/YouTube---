@@ -1,3 +1,4 @@
+import { transcriptLanguage } from '@youtube-note/shared';
 import { Icon } from './icons';
 import { ExcerptEditor } from './ExcerptEditor';
 import { AnswerText } from './AnswerText';
@@ -182,17 +183,21 @@ export function NoteEditor({
       {draft.selectedText === undefined && (
         <>
           <textarea
-            aria-label="英文摘录"
+            aria-label="原文摘录"
             value={draft.original}
             onChange={(e) => update('original', e.target.value)}
             placeholder="等待当前片段…"
           />
-          <textarea
-            aria-label="中文摘录"
-            value={draft.translated}
-            onChange={(e) => update('translated', e.target.value)}
-            placeholder="可补充或修正译文"
-          />
+          {(!source ||
+            transcriptLanguage([source]) !== 'zh' ||
+            !!draft.translated) && (
+            <textarea
+              aria-label="中文摘录"
+              value={draft.translated}
+              onChange={(e) => update('translated', e.target.value)}
+              placeholder="可补充或修正译文"
+            />
+          )}
         </>
       )}
       <label className="note-field" title="我的理解与价值">

@@ -46,3 +46,11 @@ it('已有同一视频时复用标签并定位，接收端失败则恢复带时�
   await openVideoTime(record.videoId, 1000);
   expect(api.update).toHaveBeenCalledWith(7, { url: 'https://www.youtube.com/watch?v=abcdefghijk&t=1s' });
 });
+
+it('B 站历史跳转只复用相同分 P，另一分 P 不被错误定位', async () => {
+  const videoId = 'bilibili-BV1qW411N7FU-40809285-p2';
+  api.query.mockResolvedValue([{id:8,windowId:2,url:'https://www.bilibili.com/video/BV1qW411N7FU/?p=1'}]);
+  await openVideoTime(videoId,12000);
+  expect(api.create).toHaveBeenCalledWith({url:'https://www.bilibili.com/video/BV1qW411N7FU/?p=2&t=12'});
+  expect(api.sendMessage).not.toHaveBeenCalled();
+});

@@ -1,6 +1,8 @@
 import { HistoryReaderHeader } from '../history/HistoryReaderHeader';
 import { type Dispatch, type SetStateAction } from 'react';
 import {
+  transcriptLanguage,
+  videoOrigin,
   type VideoContext,
   type VideoRecord,
   type Mode,
@@ -53,6 +55,7 @@ export function PanelControls({
   run,
   mutate,
 }: Props) {
+  const chineseOriginal = transcriptLanguage(record?.segments ?? []) === 'zh';
   return (
     <>
       {history ? (
@@ -89,7 +92,7 @@ export function PanelControls({
                   onClick={() =>
                     window.parent.postMessage(
                       { type: 'close-panel' },
-                      'https://www.youtube.com',
+                      videoOrigin(context?.videoId ?? record?.videoId ?? ''),
                     )
                   }
                 >
@@ -144,36 +147,42 @@ export function PanelControls({
       )}
       {tab === 'transcript' && (
         <div className="toolbar">
-          <div
-            className="language-buttons"
-            role="group"
-            aria-label="逐字稿显示语言"
-          >
-            {(
-              [
-                ['chinese', '中文'],
-                ['original', '英文'],
-                ['bilingual', '中英'],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                aria-pressed={mode === value}
-                className={mode === value ? 'active' : ''}
-                onClick={() => setMode(value)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          {chineseOriginal ? (
+            <span className="muted">中文原稿</span>
+          ) : (
+            <div
+              className="language-buttons"
+              role="group"
+              aria-label="逐字稿显示语言"
+            >
+              {(
+                [
+                  ['chinese', '中文'],
+                  ['original', '原文'],
+                  ['bilingual', '双语'],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  aria-pressed={mode === value}
+                  className={mode === value ? 'active' : ''}
+                  onClick={() => setMode(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
           {!history && (
             <>
-              <button
-                disabled={!!busy || !record?.segments.length}
-                onClick={() => void llmTranslate('all')}
-              >
-                LLM翻译
-              </button>
+              {!chineseOriginal && (
+                <button
+                  disabled={!!busy || !record?.segments.length}
+                  onClick={() => void llmTranslate('all')}
+                >
+                  LLM翻译
+                </button>
+              )}
               <button
                 className="history-trigger"
                 onClick={() =>

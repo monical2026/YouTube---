@@ -1,5 +1,13 @@
 # 当前实施状态
 
+## 0.6.2 交互修复（2026-10-02）
+
+extension/src/content/index.ts 的 frameHost 在插件宿主显式设置 pointer-events:auto，防止继承 B 站右栏的 none；覆盖 iframe 内容与收起横条，保留原有事件和布局。224 项单元测试及构建通过，真实网页隔离验证鼠标点击和内部滚动通过，用户随后确认基本功能与任务可完成；偶发首次整理失败仅记录，详见 test-feedback.md 的 OBS-20261002-01。
+
+## 0.6.1 当前增量（2026-10-02）
+
+B 站首轮接入已构建，真实页面字幕与元数据脚本验证通过，Chrome 整体交互待人工验收。shared/src/video-source.ts 统一平台键、URL 和来源校验；transcript-language.ts 统一中文原稿展示规则；extension/src/platforms 管 B 站当前分 P、字幕读取和解析，background/captions.ts 按平台分派。详细文件职责、范围及证据见 [多平台适配](multi-platform-adaptation.md)。下方首轮状态为历史记录，最新验收以 test-feedback.md 为准。
+
 更新时间：2026-09-12。首轮开发构建，尚未完成真实 Chrome 交互、外部服务和人工验收。
 
 ## 已建立的代码入口

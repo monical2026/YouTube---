@@ -1,4 +1,9 @@
-import { timestamp, type Analysis, type Segment } from '@youtube-note/shared';
+import {
+  transcriptLanguage,
+  timestamp,
+  type Analysis,
+  type Segment,
+} from '@youtube-note/shared';
 import { textItems, itemSources } from '../ui/analysis-format';
 import type { Block } from './document';
 function list(title: string, value: string | string[] | undefined): Block[] {
@@ -101,7 +106,7 @@ export function analysisBlocks(a: Analysis, segments: Segment[]): Block[] {
   for (const q of a.quotes) {
     const source = segments.find((s) => s.id === q.segmentId);
     blocks.push({
-      text: `${q.category ?? ''} ${source ? timestamp(source.startMs) : ''}\n${q.chinese}\n${q.original}${q.category === '关键事实' ? '\n讲者陈述，未独立核实' : ''}`,
+      text: `${q.category ?? ''} ${source ? timestamp(source.startMs) : ''}\n${source && transcriptLanguage([source]) === 'zh' ? q.original : `${q.chinese}\n${q.original}`}${q.category === '关键事实' ? '\n讲者陈述，未独立核实' : ''}`,
     });
   }
   if (!a.quotes.length) blocks.push({ text: '未发现符合独立表达要求的金句。' });

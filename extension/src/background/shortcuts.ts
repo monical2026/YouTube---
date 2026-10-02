@@ -1,15 +1,6 @@
+import { pageSource } from '@youtube-note/shared';
 export function supportedUrl(url?: string): boolean {
-  if (!url) return false;
-  try {
-    const parsed = new URL(url);
-    return (
-      parsed.origin === 'https://www.youtube.com' &&
-      parsed.pathname === '/watch' &&
-      /^[\w-]{11}$/.test(parsed.searchParams.get('v') ?? '')
-    );
-  } catch {
-    return false;
-  }
+  return pageSource(url) !== null;
 }
 
 // 打开面板使用 Chrome 的 _execute_action，不能落入快速笔记处理。

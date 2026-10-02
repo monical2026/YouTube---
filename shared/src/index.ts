@@ -1,9 +1,20 @@
+import { videoIdSchema } from './video-source';
+export {
+  videoIdSchema,
+  videoSource,
+  videoUrl,
+  videoOrigin,
+  pageSource,
+  matchesVideoPage,
+} from './video-source';
+export { transcriptLanguage, readingMode } from './transcript-language';
 import { analysisSchema } from './analysis-schema';
 import { z } from 'zod';
 
 export const modeSchema = z.enum(['original', 'chinese', 'bilingual']);
 export type Mode = z.infer<typeof modeSchema>;
 export const segmentSchema = z.object({
+  sourceLanguage: z.string().max(30).optional(),
   sourceCueIds: z.array(z.string()).optional(),
   sourceSpans: z
     .array(
@@ -57,7 +68,7 @@ export function parseAnalysisRequest(input: unknown) {
 }
 
 export const contextSchema = z.object({
-  videoId: z.string().regex(/^[\w-]{11}$/),
+  videoId: videoIdSchema,
   title: z.string().max(1000),
   durationMs: z.number().nonnegative(),
   currentMs: z.number().nonnegative(),
@@ -186,18 +197,15 @@ export const requestSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('deleteHistory'),
-    videoId: z.string().regex(/^[\w-]{11}$/),
+    videoId: videoIdSchema,
   }),
   z.object({
     type: z.literal('openHistory'),
-    videoId: z
-      .string()
-      .regex(/^[\w-]{11}$/)
-      .optional(),
+    videoId: videoIdSchema.optional(),
   }),
   z.object({
     type: z.literal('openVideoTime'),
-    videoId: z.string().regex(/^[\w-]{11}$/),
+    videoId: videoIdSchema,
     startMs: z.number().nonnegative().optional(),
   }),
   z.object({
@@ -219,7 +227,7 @@ export const requestSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('returnVideo'),
     tabId: z.number().optional(),
-    videoId: z.string().regex(/^[\w-]{11}$/),
+    videoId: videoIdSchema,
   }),
   z.object({ type: z.literal('settings') }),
   z.object({ type: z.literal('openSettings') }),

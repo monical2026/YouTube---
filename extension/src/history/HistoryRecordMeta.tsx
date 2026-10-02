@@ -1,3 +1,4 @@
+import { videoSource } from '@youtube-note/shared';
 import type { HistoryEntry } from './records';
 
 export function HistoryRecordMeta({
@@ -11,6 +12,11 @@ export function HistoryRecordMeta({
   return (
     <>
       <span className="history-meta">
+        <span className="history-content-kind">
+          {videoSource(entry.videoId).platform === 'bilibili'
+            ? 'B 站'
+            : 'YouTube'}
+        </span>
         {entry.hasTranscript && (
           <span className="history-content-kind">逐字稿</span>
         )}

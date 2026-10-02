@@ -1,3 +1,4 @@
+import { videoIdSchema } from '@youtube-note/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { z } from 'zod';
 import { App } from '../ui/App';
@@ -86,7 +87,7 @@ export function HistoryPage() {
               Math.max(a.updatedAt ?? 0, dates[a.videoId] ?? 0),
           )[0];
           const id =
-            explicit && /^[\w-]{11}$/.test(explicit)
+            explicit && videoIdSchema.safeParse(explicit).success
               ? explicit
               : (list.entries.find((e) => e.videoId === last)?.videoId ??
                 first?.videoId);

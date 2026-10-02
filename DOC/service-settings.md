@@ -1,5 +1,7 @@
 # 独立设置页与 LLM、外部服务连接方案
 
+0.6.1 增量：B 站已有字幕使用当前浏览器的站内登录，不新增服务表单或 API Key；受限字幕需本人在 Chrome 登录 B 站。现有 LLM 连接复用于 B 站脉络和主动笔记提问。B 站无字幕转写尚未接入，不能选 Supadata 自动回退；后续通用转写方案见 [多平台适配](multi-platform-adaptation.md)。
+
 > 状态：需求和技术设计，尚未实现或连接真实账号。用户已明确要求专门网页配置 LLM 和其他外部服务 API。
 > 视觉以 [design.md](design.md) 为准，目录以 [architecture.md](architecture.md) 为准。本文件规定配置字段、调用关系和保存规则。
 

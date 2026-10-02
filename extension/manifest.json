@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube 学习笔记",
-  "version": "0.5.8",
+  "version": "0.6.2",
   "description": "带时间的双语逐字稿、中文梳理和可编辑学习笔记。",
   "permissions": [
     "storage",
@@ -12,7 +12,8 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://www.youtube.com/*"
+    "https://www.youtube.com/*",
+    "https://www.bilibili.com/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -56,11 +57,22 @@
     },
     {
       "matches": [
-        "https://www.youtube.com/*"
+        "https://www.youtube.com/*",
+        "https://www.bilibili.com/*"
       ],
       "js": [
         "content.js"
       ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.bilibili.com/*"
+      ],
+      "js": [
+        "bilibili-bridge.js"
+      ],
+      "world": "MAIN",
       "run_at": "document_idle"
     }
   ],
@@ -71,7 +83,8 @@
         "assets/*"
       ],
       "matches": [
-        "https://www.youtube.com/*"
+        "https://www.youtube.com/*",
+        "https://www.bilibili.com/*"
       ]
     }
   ],

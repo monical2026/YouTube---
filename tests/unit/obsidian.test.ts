@@ -47,3 +47,13 @@ it('下载协议只接受生成文档和安全文件名，Native 导出操作可
   expect(requestSchema.safeParse({type:'downloadExport',filename:'课程.md',dataUrl:'https://example.com/private'}).success).toBe(false);
   expect(nativeRequestSchema.safeParse({id:'1',operation:'obsidianExport',payload:input}).success).toBe(true);
 });
+
+it('B 站 Obsidian 导出接受安全平台键，分 P 分别保存且不覆盖 YouTube 文件', async () => {
+  const folder=await vault();
+  await writeObsidian(folder,input);
+  const id='bilibili-BV1qW411N7FU-40809285-p2';
+  expect((await writeObsidian(folder,{...input,videoId:id})).status).toBe('saved');
+  expect((await writeObsidian(folder,{...input,videoId:id})).status).toBe('duplicate');
+  expect(await readdir(folder)).toHaveLength(2);
+  await expect(writeObsidian(folder,{...input,videoId:'../escape'})).rejects.toThrow();
+});
