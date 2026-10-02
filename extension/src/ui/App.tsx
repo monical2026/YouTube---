@@ -214,81 +214,87 @@ export function App({ history }: { history?: HistoryReader }) {
     );
   return (
     <main className="app">
-      <PanelControls
-        history={!!history}
-        {...{
-          context,
-          record,
-          tabId,
-          tab,
-          setTab,
-          mode,
-          setMode,
-          error,
-          setError,
-          busy,
-          progress,
-          candidate,
-          setCandidate,
-          translateLocal,
-          llmTranslate,
-          run,
-          mutate,
-        }}
-      />
       <div
-        className={`scroll ${busy ? 'is-loading' : ''}`}
-        ref={scroll}
-        onWheel={() => setFollow(false)}
-        onTouchMove={() => setFollow(false)}
-        onMouseUp={() => {
-          selectText();
-          if (window.getSelection()?.toString()) setFollow(false);
-        }}
-        onKeyUp={selectText}
-        onScroll={() => setSelected(null)}
+        className={history ? 'history-reader-flow' : 'panel-reader-flow'}
+        onScrollCapture={() => setSelected(null)}
       >
-        {busy ? (
-          <LoadingView label={busy} progress={progress} />
-        ) : (
-          <>
-            {tab === 'transcript' &&
-              context &&
-              record &&
-              !record.segments.length && (
-                <GenerateCaptions
-                  key={context.videoId}
-                  context={context}
-                  tabId={tabId}
-                  onReady={async (segments) => {
-                    await mutate((r) => ({
-                      ...r,
-                      segments: r.segments.length ? r.segments : segments,
-                      title: context.title,
-                    }));
-                  }}
-                />
-              )}
-            <ContentViews
-              history={!!history}
-              {...{
-                tab,
-                record,
-                context,
-                busy,
-                mode,
-                active,
-                getCaptions,
-                seek,
-                setEditing,
-                newNote,
-                setEdit,
-                onAskNote: askNote,
-                deleteNote,
-              }}
-            />
-          </>
-        )}
+        <PanelControls
+          history={!!history}
+          onExport={() => setExportOpen(true)}
+          {...{
+            context,
+            record,
+            tabId,
+            tab,
+            setTab,
+            mode,
+            setMode,
+            error,
+            setError,
+            busy,
+            progress,
+            candidate,
+            setCandidate,
+            translateLocal,
+            llmTranslate,
+            run,
+            mutate,
+          }}
+        />
+        <div
+          className={`scroll ${busy ? 'is-loading' : ''}`}
+          ref={scroll}
+          onWheel={() => setFollow(false)}
+          onTouchMove={() => setFollow(false)}
+          onMouseUp={() => {
+            selectText();
+            if (window.getSelection()?.toString()) setFollow(false);
+          }}
+          onKeyUp={selectText}
+          onScroll={() => setSelected(null)}
+        >
+          {busy ? (
+            <LoadingView label={busy} progress={progress} />
+          ) : (
+            <>
+              {tab === 'transcript' &&
+                context &&
+                record &&
+                !record.segments.length && (
+                  <GenerateCaptions
+                    key={context.videoId}
+                    context={context}
+                    tabId={tabId}
+                    onReady={async (segments) => {
+                      await mutate((r) => ({
+                        ...r,
+                        segments: r.segments.length ? r.segments : segments,
+                        title: context.title,
+                      }));
+                    }}
+                  />
+                )}
+              <ContentViews
+                history={!!history}
+                {...{
+                  tab,
+                  record,
+                  context,
+                  busy,
+                  mode,
+                  active,
+                  getCaptions,
+                  seek,
+                  setEditing,
+                  newNote,
+                  setEdit,
+                  onAskNote: askNote,
+                  deleteNote,
+                }}
+              />
+            </>
+          )}
+        </div>
       </div>
       {selected && !asking && !edit && !busy && (
         <SelectionActions
@@ -306,6 +312,9 @@ export function App({ history }: { history?: HistoryReader }) {
         />
       )}
       <footer>
+        {history && (
+          <span className="muted">本地历史 · 阅读不会自动调用模型</span>
+        )}
         {!history && (
           <>
             <button
@@ -332,13 +341,15 @@ export function App({ history }: { history?: HistoryReader }) {
             </button>
           </>
         )}
-        <button
-          className="export-trigger"
-          disabled={!record}
-          onClick={() => setExportOpen(true)}
-        >
-          导出
-        </button>
+        {!history && (
+          <button
+            className="export-trigger"
+            disabled={!record}
+            onClick={() => setExportOpen(true)}
+          >
+            导出
+          </button>
+        )}
       </footer>
       {exportOpen && record && (
         <ExportDialog

@@ -1,3 +1,4 @@
+import { HistoryReaderHeader } from '../history/HistoryReaderHeader';
 import { type Dispatch, type SetStateAction } from 'react';
 import {
   type VideoContext,
@@ -11,6 +12,7 @@ type Candidate = { id: string; revision: number; text: string }[] | null;
 type Setter<T> = Dispatch<SetStateAction<T>>;
 type Props = {
   history?: boolean;
+  onExport: () => void;
   context: VideoContext | null;
   record: VideoRecord | null;
   tabId?: number;
@@ -33,6 +35,7 @@ type Props = {
 };
 export function PanelControls({
   history = false,
+  onExport,
   context,
   record,
   tabId,
@@ -52,71 +55,82 @@ export function PanelControls({
 }: Props) {
   return (
     <>
-      <header>
-        <div className="panel-heading">
-          <div className="panel-video-title">
-            {(history ? record?.title || record?.videoId : context?.title) ??
-              '正在读取视频…'}
-          </div>
-          <div className="row panel-header-actions">
-            <button
-              className="settings-icon-button"
-              title="服务设置"
-              aria-label="服务设置"
-              onClick={() =>
-                void rpc({ type: 'openSettings' }).catch((e) =>
-                  setError(errorText(e)),
-                )
-              }
-            >
-              <Icon kind="settings" />
-            </button>
-            {window.parent !== window && (
+      {history ? (
+        <HistoryReaderHeader
+          {...{ record, tab, setTab, onExport }}
+          onReturn={() =>
+            void rpc({ type: 'openVideoTime', videoId: record?.videoId }).catch(
+              (e) => setError(errorText(e)),
+            )
+          }
+        />
+      ) : (
+        <header>
+          <div className="panel-heading">
+            <div className="panel-video-title">
+              {(history ? record?.title || record?.videoId : context?.title) ??
+                '正在读取视频…'}
+            </div>
+            <div className="row panel-header-actions">
               <button
+                className="settings-icon-button"
+                title="服务设置"
+                aria-label="服务设置"
                 onClick={() =>
-                  window.parent.postMessage(
-                    { type: 'close-panel' },
-                    'https://www.youtube.com',
+                  void rpc({ type: 'openSettings' }).catch((e) =>
+                    setError(errorText(e)),
                   )
                 }
               >
-                收起
+                <Icon kind="settings" />
               </button>
-            )}
+              {window.parent !== window && (
+                <button
+                  onClick={() =>
+                    window.parent.postMessage(
+                      { type: 'close-panel' },
+                      'https://www.youtube.com',
+                    )
+                  }
+                >
+                  收起
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-        {window.parent === window && (record || context) && (
-          <button
-            onClick={() =>
-              void rpc({
-                type: history ? 'openVideoTime' : 'returnVideo',
-                tabId,
-                videoId:
-                  new URLSearchParams(location.search).get('video') ??
-                  record?.videoId ??
-                  context?.videoId,
-              }).catch((e) => setError(errorText(e)))
-            }
-          >
-            返回原视频
-          </button>
-        )}
-        <nav className="tabs">
-          {[
-            ['transcript', '逐字稿'],
-            ['analysis', '视频脉络'],
-            ['notes', '笔记'],
-          ].map(([id, label]) => (
+          {window.parent === window && (record || context) && (
             <button
-              className={tab === id ? 'active' : ''}
-              key={id}
-              onClick={() => setTab(id)}
+              onClick={() =>
+                void rpc({
+                  type: history ? 'openVideoTime' : 'returnVideo',
+                  tabId,
+                  videoId:
+                    new URLSearchParams(location.search).get('video') ??
+                    record?.videoId ??
+                    context?.videoId,
+                }).catch((e) => setError(errorText(e)))
+              }
             >
-              {label}
+              返回原视频
             </button>
-          ))}
-        </nav>
-      </header>
+          )}
+          <nav className="tabs">
+            {[
+              ['transcript', '逐字稿'],
+              ['analysis', '视频脉络'],
+              ['notes', '笔记'],
+            ].map(([id, label]) => (
+              <button
+                className={tab === id ? 'active' : ''}
+                key={id}
+                onClick={() => setTab(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+        </header>
+      )}
       {error && (
         <div role="alert" className="error">
           {error}

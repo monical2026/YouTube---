@@ -8,6 +8,20 @@ const base = recordSchema.parse({ videoId: 'fixture0001', title: '验证 A · Ag
   { id: 's1', startMs: 0, endMs: 10000, original: 'Break the problem into steps.', translated: '把问题拆成可以验证的步骤。' }
 ], notes: [{ id: 'n1', videoId: 'fixture0001', title: '验证 A', startMs: 0, segmentId: 's1', sourceRevision: 0, original: '', translated: '', selectedText: '把问题拆成可以验证的步骤。', thought: '用小实验验证想法', question: '怎样确定验证标准？', revision: 0, draft: true, updatedAt: 1 }], analysis: null });
 const records = new Map<string, VideoRecord>([[base.videoId, base], ['fixture0002', { ...base, videoId: 'fixture0002', title: '验证 B · 无逐字稿的旧记录', notes: [], segments: [] }]]);
+// Opt-in long-list fixture for history ordering and full-pane scrolling.
+if (new URLSearchParams(location.search).has('layout')) {
+  records.clear();
+  for (let i = 1; i <= 12; i++) {
+    const videoId = `layout${String(i).padStart(5, '0')}`;
+    records.set(videoId, {
+      ...base, videoId, title: `布局验证 ${i} · 长视频逐字稿`,
+      updatedAt: Date.now() - i * 86400000, notes: [],
+      segments: Array.from({length: 40}, (_, index) => ({
+        ...base.segments[0], id: `s${index}`, startMs: index * 10000, endMs: (index + 1) * 10000,
+      })),
+    });
+  }
+}
 const listeners = new Set<(message: unknown) => void>();
 let failSave = false, models = 0, writes = 0;
 const memory: Record<string, unknown> = {};

@@ -183,3 +183,24 @@ shared 的 analysisInput 使用 original；parseAnalysisRequest 统一 analyze/r
 修正逐字稿时间索引为左闭右开区间，交界时刻不再属于上一段。App 接入 usePlaybackHighlight：点击立即选择目标段，播放器尚未到达时忽略旧进度对高亮的影响；到达后在该段内保持用户选择（兼容来源时间重叠），离开则恢复播放跟随。失败、视频切换或 5 秒未收到到达进度时撤销临时状态；较早请求的失败不得清除新目标。历史阅读不建立播放高亮。
 
 文件职责：segmentation/index.ts 修复索引边界；ui/playback-highlight.ts 管理目标状态转换；ui/usePlaybackHighlight.ts 管理交互状态及定时器清理；ui/App.tsx 接入点击和失败；tests/unit/playback-highlight.test.ts 覆盖边界/旧进度/重叠/乱序失败；tests/browser/playback.* 用实际组件验证显示。App 已超过 300 行，本轮将新增状态管理独立拆出，保留原有界面编排，避免无关重构。
+
+## 0.3.6 历史侧栏视觉优化（待验收）
+
+去除蓝色选中竖条，使用中性底色/细边区分选择；标题 14px/600/21px、最多三行，内容类型浅灰标签，笔记数量及最近学习时间分层展示。左栏仍为 280px，右侧阅读和搜索范围、排序、日期取值、存储行为不变；保留深色、窄屏和键盘焦点样式。
+
+HistoryRecordMeta.tsx 提取只读元信息展示，HistoryPage.tsx 接入该组件；history.css 仅调整历史侧栏样式，design.md 更新字段参数。原型位于已忽略 artifacts/history-style，生产构建不含方案切换器；未提交或推送。
+
+## 0.3.7 历史页选定样式落地
+
+新增 HistorySidebar、HistoryReaderHeader 展示组件及 history-reader.css；HistoryPage 保留已有读取/切换/草稿离开保护逻辑，App 与 PanelControls 提供历史页顶部导出入口。外壳和左右内容统一采用用户指定色值，日期分组只使用已有数据，缺日期明确显示。共享 App 原本超过 300 行，本轮保留已有生命周期编排，避免样式任务扩大为业务重构；新增展示结构放独立组件。
+
+构建与自动检查通过。真实 Chrome 加载 `extension/dist` 后重新打开历史页进行最终视觉验收；此次尚未提交或推送。
+
+## 0.3.8 历史页滚动与排序
+
+`list-order.ts` 保存本次浏览的排序时间快照；HistoryPage 与 HistorySidebar 共用该快照排序和分组，实际阅读时间仍持久化。新增记录可加入列表。App 增加阅读流容器供历史页统一滚动，嵌入面板采用 display: contents；弹层不进入阅读流。样式修订见 design.md，版本统一到 0.3.8。
+
+
+### 0.3.9 历史页内容切换按钮收紧
+
+逐字稿／视频脉络／笔记：桌面按钮内边距改为上下 8px、左右 14px，行高 21px，实际高度 37px；整组高度由 47px 改为 45px。字号仍为 13px、字重选中 600/未选中 400。窄屏原本即 37px，保留左右 10px 内边距。中文／英文／中英按钮不变。

@@ -1002,3 +1002,8 @@ progress {
 .clip-overview {
   margin: 8px 0;
 }
+
+/* Preserve the embedded panel layout while history uses a shared scroll area. */
+.panel-reader-flow {
+  display: contents;
+}
