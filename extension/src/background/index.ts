@@ -1,3 +1,4 @@
+import { exportDownloadUrl, exportDownloadFilename } from './download-export';
 import { captureShortcut, supportedUrl } from './shortcuts';
 import { createCaptionCache } from './caption-cache';
 import { matchesExtensionPage } from './origin';
@@ -157,6 +158,19 @@ async function handle(
     recordChanged(removed.videoId, removed.revision);
     return true;
   }
+  if (r.type === 'downloadExport') {
+    try {
+      return await chrome.downloads.download({
+        url: exportDownloadUrl(r.dataUrl, r.filename),
+        filename: r.filename,
+        saveAs: true,
+        conflictAction: 'uniquify',
+      });
+    } catch (error) {
+      if (error instanceof Error && /cancel/i.test(error.message)) return null;
+      throw error;
+    }
+  }
   if (r.type === 'listHistory') return listHistory();
   if (r.type === 'openHistory') return openHistory(r.videoId);
   if (r.type === 'openVideoTime') return openVideoTime(r.videoId, r.startMs);
@@ -295,4 +309,9 @@ chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
     contexts.delete(details.tabId);
     broadcast(details.tabId, null);
   }
+});
+
+chrome.downloads.onDeterminingFilename.addListener((item, suggest) => {
+  const filename = exportDownloadFilename(item, chrome.runtime.id);
+  suggest(filename ? { filename, conflictAction: 'uniquify' } : undefined);
 });

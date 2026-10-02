@@ -172,6 +172,19 @@ export const requestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('load'), videoId: z.string() }),
   z.object({ type: z.literal('listHistory') }),
   z.object({
+    type: z.literal('downloadExport'),
+    filename: z
+      .string()
+      .regex(/^[^/\\]{1,200}\.(md|txt|docx)$/)
+      .refine((value) => [...value].every((char) => char.charCodeAt(0) >= 32)),
+    dataUrl: z
+      .string()
+      .max(9_000_000)
+      .regex(
+        /^data:(text\/plain|text\/markdown|application\/vnd.openxmlformats-officedocument.wordprocessingml.document)(;charset=utf-8)?;base64,[A-Za-z0-9+/=]*$/,
+      ),
+  }),
+  z.object({
     type: z.literal('deleteHistory'),
     videoId: z.string().regex(/^[\w-]{11}$/),
   }),
@@ -226,6 +239,9 @@ export const requestSchema = z.discriminatedUnion('type', [
 export const nativeRequestSchema = z.object({
   id: z.string(),
   operation: z.enum([
+    'obsidianChoose',
+    'obsidianTarget',
+    'obsidianExport',
     'status',
     'settings',
     'saveSettings',

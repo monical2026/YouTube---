@@ -208,3 +208,23 @@ HistoryRecordMeta.tsx 提取只读元信息展示，HistoryPage.tsx 接入该组
 ## 0.4.1 历史记录删除
 
 HistorySidebar 增加图标入口，HistoryPage 负责确认和成功/失败状态；shared requestSchema 与后台同步新增 deleteHistory；database 事务清除内容并保留空版本标记。useVideo 和 caption-cache 使用 deletionEpoch 阻止旧任务回写。无需新依赖或数据库升级。源码版本统一 0.4.1，待用户验收，未提交推送。
+
+## 0.5.1 Obsidian 与保存位置窗口
+
+新增本机导出模块与前端适配，沿用统一文档生成，不拆成三个文件。新增 downloads 权限，下载请求限制 MIME、后缀、文件名和内容大小，不接受任意网络 URL。已有本机组件更新到本次构建；实际个人知识库目录尚未选择，不写入真实笔记。详见 obsidian-export.md。
+
+## 0.5.2 导出修复
+
+新增 createDownloadBlob 独立生成格式对应的 Blob，Markdown 使用 text/markdown 而非 TXT MIME；下载请求同步校验新类型。新增 DuplicateExportDialog，使用浏览器原生模态层实现遮罩、焦点与取消交互。既有 Obsidian 防覆盖存储逻辑不变。
+
+## 0.5.3 下载文件名与提示修订
+
+新增 background/download-filename.ts，通过 onDeterminingFilename 对本扩展 Markdown 下载确定 .md 后缀；其他下载原样交还。成功提示精简；203 项测试通过。尚未在用户实际 Chrome 更新插件后执行保存端到端验收。
+
+## 0.5.4 本机保存窗口
+
+新增 service/src/save-export.ts，downloadExport 后台请求改发 Native saveExport。输入沿用严格文件名/data URL 校验，大小限制 7MB；选择路径只能由系统窗口返回。先写同目录临时文件并同步，再 rename，失败清理本次临时文件。扩展移除 downloads 权限及旧文件名监听。默认视频名在 UI 生成，原样传给系统窗口；保存成功才显示成功。本机组件已更新。
+
+## 0.5.5 浏览器下载恢复
+
+撤回 Native saveExport 路由与实现，下载重新经 Chrome downloads API；新增 download-export.ts 保存并解析原始名称供最终命名监听使用。仅本扩展且携带合法名称参数的请求会建议文件名。downloads 权限恢复，Obsidian 模块不变。

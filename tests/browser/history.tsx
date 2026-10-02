@@ -24,6 +24,7 @@ if (new URLSearchParams(location.search).has('layout')) {
 }
 const listeners = new Set<(message: unknown) => void>();
 let failSave = false, models = 0, writes = 0;
+let exported = false;
 const memory: Record<string, unknown> = {};
 const status = document.createElement('div');
 status.style.cssText = 'position:fixed;bottom:6px;left:8px;z-index:1000;background:#fff;color:#222;border:1px solid #ccc;padding:4px';
@@ -58,6 +59,15 @@ Object.defineProperty(window, 'chrome', { configurable: true, value: {
           records.set(saved.videoId, saved); writes++; showCounts();
           listeners.forEach(fn => fn({ type: 'recordChanged', videoId: saved.videoId, revision: saved.revision }));
           return { data: structuredClone(saved) };
+        }
+        if (r.type === 'downloadExport') return { data: 1 };
+        if (r.type === 'native' && r.operation.startsWith('obsidian')) {
+          if (r.operation !== 'obsidianExport') return { data: { folder: '/mock/Obsidian/视频学习', vault: '/mock/Obsidian' } };
+          if (failSave) throw new Error('模拟文件写入失败');
+          const payload = r.payload as { copy?: boolean };
+          if (exported && !payload.copy) return { data: { status: 'duplicate', files: ['验证视频.md'] } };
+          exported = true;
+          return { data: { status: 'saved', filename: payload.copy ? '验证视频（副本）.md' : '验证视频.md', folder: '/mock/Obsidian/视频学习' } };
         }
         if (r.type === 'native') { models++; showCounts(); return { data: { answer: '通俗解释：先写清楚输入、预期结果和如何核对。\n准确概念：这是验收标准。\n模型专用检索排除词' } }; }
         throw new Error(`隔离验证不允许 ${r.type}`);

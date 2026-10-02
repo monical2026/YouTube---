@@ -6,8 +6,16 @@ import {
   printPdf,
   type ExportSection,
 } from '../export/document';
-import { wordDocument } from '../export/word';
-import { errorText } from '../lib/rpc';
+import { createDownloadBlob } from '../export/download';
+import { DuplicateExportDialog } from './DuplicateExportDialog';
+import {
+  blobDataUrl,
+  getObsidianTarget,
+  chooseObsidianTarget,
+  sendToObsidian,
+  type ObsidianTarget,
+} from '../export/obsidian';
+import { errorText, rpc } from '../lib/rpc';
 export function ExportDialog({
   record,
   mode,
@@ -18,36 +26,90 @@ export function ExportDialog({
   onClose: () => void;
 }) {
   const [selected, setSelected] = useState<ExportSection[]>([
-    'transcript',
-    'notes',
-    'analysis',
+    ...(record.notes.length ? ['notes' as const] : []),
+    ...(record.analysis ? ['analysis' as const] : []),
+    ...(!record.notes.length && !record.analysis && record.segments.length
+      ? ['transcript' as const]
+      : []),
   ]);
   const [format, setFormat] = useState('md'),
     [error, setError] = useState('');
-  function runExport() {
+  const [destination, setDestination] = useState('download');
+  const [target, setTarget] = useState<ObsidianTarget | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const [duplicates, setDuplicates] = useState<string[]>([]);
+  async function chooseTarget() {
+    setBusy(true);
+    setError('');
+    try {
+      const chosen = await chooseObsidianTarget();
+      if (chosen) {
+        setTarget(chosen);
+        setDuplicates([]);
+      }
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function setExportDestination(value: string) {
+    setDestination(value);
+    setError('');
+    setMessage('');
+    setDuplicates([]);
+    if (value !== 'obsidian') return;
+    setBusy(true);
+    try {
+      setTarget(await getObsidianTarget());
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function runExport(copy = false) {
+    setBusy(true);
+    setError('');
+    setMessage('');
     try {
       const blocks = exportBlocks(record, mode, selected);
+      if (destination === 'obsidian') {
+        const result = await sendToObsidian({
+          videoId: record.videoId,
+          title: record.title,
+          markdown: exportText(blocks, true),
+          copy,
+        });
+        if (result.status === 'duplicate') {
+          setDuplicates(result.files);
+          return;
+        }
+        setDuplicates([]);
+        setMessage('导出成功');
+        return;
+      }
       if (format === 'pdf') {
         printPdf(blocks);
         return;
       }
-      const blob =
-        format === 'docx'
-          ? new Blob([wordDocument(blocks)], {
-              type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            })
-          : new Blob([exportText(blocks, format === 'md')], {
-              type: 'text/plain;charset=utf-8',
-            });
-      const url = URL.createObjectURL(blob),
-        link = document.createElement('a');
-      link.href = url;
-      link.download = `${record.title.replace(/[/:*?"<>|]/g, '_')}.${format}`;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      onClose();
+      const blob = createDownloadBlob(blocks, format);
+      const filename = `${(record.title || record.videoId)
+        .split('')
+        .map((char) => (char.charCodeAt(0) < 32 ? '_' : char))
+        .join('')
+        .replace(/[/\\:*?"<>|]/g, '_')
+        .slice(0, 100)}.${format}`;
+      await rpc({
+        type: 'downloadExport',
+        filename,
+        dataUrl: await blobDataUrl(blob),
+      });
     } catch (e) {
       setError(errorText(e));
+    } finally {
+      setBusy(false);
     }
   }
   return (
@@ -58,7 +120,7 @@ export function ExportDialog({
         aria-modal="true"
         aria-label="导出学习内容"
         onKeyDown={(event) => {
-          if (event.key === 'Escape') {
+          if (event.key === 'Escape' && !busy) {
             event.preventDefault();
             onClose();
           }
@@ -81,11 +143,44 @@ export function ExportDialog({
       >
         <div className="row">
           <h2>导出</h2>
-          <button autoFocus onClick={onClose}>
+          <button autoFocus disabled={busy} onClick={onClose}>
             关闭
           </button>
         </div>
-        <fieldset>
+        <fieldset disabled={busy}>
+          <legend>导出到</legend>
+          <label>
+            <input
+              type="radio"
+              name="export-destination"
+              checked={destination === 'download'}
+              onChange={() => void setExportDestination('download')}
+            />
+            下载文件
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="export-destination"
+              checked={destination === 'obsidian'}
+              onChange={() => void setExportDestination('obsidian')}
+            />
+            Obsidian
+          </label>
+        </fieldset>
+        {destination === 'obsidian' && (
+          <div className="export-target">
+            <p>
+              {target
+                ? `保存位置：${target.folder}`
+                : '请选择本机 Obsidian 知识库或其中的目标文件夹。'}
+            </p>
+            <button disabled={busy} onClick={() => void chooseTarget()}>
+              {target ? '更换文件夹' : '选择文件夹'}
+            </button>
+          </div>
+        )}
+        <fieldset disabled={busy}>
           <legend>选择内容（可多选）</legend>
           {(
             [
@@ -97,6 +192,13 @@ export function ExportDialog({
             <label key={value}>
               <input
                 type="checkbox"
+                disabled={
+                  value === 'transcript'
+                    ? !record.segments.length
+                    : value === 'notes'
+                      ? !record.notes.length
+                      : !record.analysis
+                }
                 checked={selected.includes(value)}
                 onChange={(e) =>
                   setSelected(
@@ -110,38 +212,66 @@ export function ExportDialog({
             </label>
           ))}
         </fieldset>
-        <fieldset>
-          <legend>文件格式</legend>
-          {[
-            ['md', 'Markdown'],
-            ['txt', 'TXT'],
-            ['pdf', 'PDF'],
-            ['docx', 'Word'],
-          ].map(([value, label]) => (
-            <label key={value}>
-              <input
-                type="radio"
-                name="export-format"
-                checked={format === value}
-                onChange={() => setFormat(value)}
-              />
-              {label}
-            </label>
-          ))}
-        </fieldset>
-        <p className="muted">
-          逐字稿按当前语言模式导出，笔记保留双语。
-          {format === 'pdf' ? 'PDF 将打开打印窗口，请选择“另存为 PDF”。' : ''}
-        </p>
+        {destination === 'download' && (
+          <fieldset disabled={busy}>
+            <legend>文件格式</legend>
+            {[
+              ['md', 'Markdown'],
+              ['txt', 'TXT'],
+              ['pdf', 'PDF'],
+              ['docx', 'Word'],
+            ].map(([value, label]) => (
+              <label key={value}>
+                <input
+                  type="radio"
+                  name="export-format"
+                  checked={format === value}
+                  onChange={() => setFormat(value)}
+                />
+                {label}
+              </label>
+            ))}
+          </fieldset>
+        )}
+        {destination === 'download' && format === 'pdf' && (
+          <p className="muted">PDF 将打开打印窗口，请选择“另存为 PDF”。</p>
+        )}
         {error && <p role="alert">{error}</p>}
         <button
           className="primary"
-          disabled={!selected.length}
-          onClick={runExport}
+          disabled={
+            busy ||
+            !selected.length ||
+            !!duplicates.length ||
+            (destination === 'obsidian' && !target)
+          }
+          onClick={() => void runExport()}
         >
-          导出所选内容
+          {busy
+            ? '正在处理…'
+            : destination === 'obsidian'
+              ? '导出到 Obsidian'
+              : '下载文件'}
         </button>
+        {message && (
+          <p role="status" className="export-result">
+            <span aria-hidden="true">✓</span>
+            {message}
+          </p>
+        )}
       </section>
+      {!!duplicates.length && (
+        <DuplicateExportDialog
+          files={duplicates}
+          busy={busy}
+          error={error}
+          onConfirm={() => void runExport(true)}
+          onCancel={() => {
+            setDuplicates([]);
+            setError('');
+          }}
+        />
+      )}
     </div>
   );
 }

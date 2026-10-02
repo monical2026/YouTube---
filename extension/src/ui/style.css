@@ -1007,3 +1007,52 @@ progress {
 .panel-reader-flow {
   display: contents;
 }
+
+.export-target,
+.export-result {
+  overflow-wrap: anywhere;
+}
+
+.export-result {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  margin: 8px 0 0;
+  padding: 4px 8px;
+  border: 1px solid #a7d9bc;
+  border-radius: 7px;
+  background: #edf9f1;
+  color: #187347;
+  font-size: 0.9em;
+  font-weight: 500;
+  line-height: 1.5;
+}
+@media (prefers-color-scheme: dark) {
+  .export-result {
+    border-color: #37684e;
+    background: #19382b;
+    color: #8fe0b2;
+  }
+}
+
+.duplicate-export-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  background: var(--surface);
+  color: inherit;
+  box-shadow: 0 16px 60px #0003;
+  font-size: 13px;
+  line-height: 21px;
+}
+.duplicate-export-dialog::backdrop {
+  background: #0005;
+}
+.duplicate-export-dialog ul {
+  overflow-wrap: anywhere;
+  padding-left: 20px;
+}

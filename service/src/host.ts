@@ -1,3 +1,4 @@
+import { obsidian } from './obsidian';
 import { reviewAnalysis } from './providers/analysis-review';
 import { answerQuestion } from './providers/questions';
 import { codexStatus } from './providers/codex';
@@ -26,6 +27,10 @@ import { serviceUrl, requestJson } from './security/http';
 import { llm, translate, analyze, transcript } from './providers';
 async function handle(input: unknown): Promise<unknown> {
   const r = nativeRequestSchema.parse(input);
+  if (
+    ['obsidianChoose', 'obsidianTarget', 'obsidianExport'].includes(r.operation)
+  )
+    return obsidian(r.operation, r.payload);
   const settings = await readSettings();
   if (r.operation === 'prepareGeneration')
     return prepareGeneration(r.payload, settings);

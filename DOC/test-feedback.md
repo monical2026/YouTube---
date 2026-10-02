@@ -863,3 +863,68 @@ pnpm check 通过：类型、lint、格式、144 项单元测试及构建。Chro
 ## 2026-10-02 · 0.4.1 用户验收与发布授权
 
 用户确认此版本可用，授权本地提交并推送至既有公开仓库 monical2026/YouTube--- 的 main 分支。验收范围为历史记录确认删除、旧窗口写入保护及版本规则修订。沿用已通过的 197 项测试和 0.4.1 重新构建验证；验收后仅更新文档状态，未修改业务代码。
+
+## 2026-10-02 · 0.5.1 Obsidian 导出
+
+- pnpm check 通过：32 个文件共 201 项测试、类型、lint、格式、构建。
+- 临时测试知识库实际写文件：合并文本、重复提示不写入、连续副本编号、原文件内容不变、并发首导出不覆盖、改标题同视频仍提示、非法目录与软链接变化拒绝、路径字符安全处理。
+- 协议用例：下载只允许安全文件名和文档 data URL，拒绝网络地址和不支持的文件后缀。
+- Ego Lite 测试夹具：选择 Obsidian、读取目标目录、首次导出成功状态、再次导出提醒、取消、继续生成副本，均验证；下载入口已验证调用与提示，实际系统保存窗口仍待 Chrome 插件验收。
+- 自动化没有写入用户真实 Obsidian 知识库，也未替用户选择目录。真实 macOS 目录选择窗口、真实 Chrome 保存窗口及个人知识库效果需用户首次使用时验收。
+- 已使用现有扩展 ID 更新本机组件注册（未读取/写入 API key）。通过真实 Native Messaging 帧调用安装后的 obsidianTarget，返回成功且尚未配置目录，确认新操作已可用；未调用文件夹选择或向个人知识库写入。
+
+## 2026-10-02 · 0.5.2 Markdown MIME 与重复弹窗
+
+- 用户报告 Markdown 下载被显示为 TXT；代码确认 Markdown 与 TXT 共用 text/plain。本次区分为 text/markdown;charset=utf-8，保留 .md 后缀并同步协议。新增回归校验 Blob MIME、Markdown 内容及下载协议。
+- pnpm check 全通过：33 个文件 202 项单测、类型、lint、格式、构建。
+- 真实 Chrome 保存窗口的扩展名/系统类型显示仍待用户复测；未声称测试夹具等同实际下载。
+- Ego Lite + 真实导出组件/模拟本机响应验证：重复时 dialog 匹配 :modal，默认焦点为“取消”；取消关闭弹窗；继续导出副本成功后关闭弹窗并显示“（副本）.md”文件名。未向用户实际知识库写入。
+
+## 2026-10-02 · 0.5.3 实际后缀核对与简化提示
+
+- 更正此前表述：用户报告的是实际后缀 .txt，不是系统类型标签。只读检查 Downloads 中相关 Training an LLM 文件：两个 .txt 文件内容以 Markdown 标题开头，另一个 TXT 无标题标记。未修改或重命名用户文件。
+- 下载数据库处于锁定状态，未读取其中 MIME 元数据；不将猜测写成已确认的浏览器内部根因。
+- 参考 Chrome downloads 官方文档，onDeterminingFilename 可在 MIME 和暂定文件名确定后指定最终文件名：https://developer.chrome.com/docs/extensions/reference/api/downloads 。新增仅限本扩展且 URL 为 text/markdown 的后缀校正；普通 TXT/其他扩展下载不改动。
+- 新增回归模拟 Chrome 暂定 .txt 的输入，验证输出 .md、已为 .md 不重复追加、TXT 和其他扩展不受影响。pnpm check 通过：203 项测试及全部构建检查。
+- Obsidian 成功提示只显示“导出成功”。重复确认弹窗保持此前逻辑，用户尚未验收。
+- 此次没有重载用户 Chrome 插件或替用户更新安装。未执行更新后的真实 Chrome 保存窗口端到端下载，因此不宣称实际保存后缀已验收。
+
+## 2026-10-02 · 0.5.4 保存窗口与默认名称
+
+- 用户确认格式正确，但不弹保存窗口、名称显示“下载”。旧补丁从 Chrome tentative filename 推导后缀，可能沿用默认“下载”；saveAs:true 与用户实际观察不一致，未证实浏览器内部不弹窗的具体原因。
+- 改由本机组件的 saveExport 调用 osascript choose file name，default name 直接接收视频标题文件名（argv 传参，非拼接脚本）；系统窗口负责位置、改名和同名替换确认。参考 Apple 官方说明：https://developer.apple.com/library/archive/documentation/LanguagesUtilities/Conceptual/MacAutomationScriptingGuide/PromptforaFileName.html 。旧 Chrome 下载分支及监听退出使用。
+- pnpm check 通过：34 个文件 206 项测试、类型、lint、格式、构建。每种格式独立测试默认名传递、两次保存调用两次选择器、用户改名后写入准确字节、单文件结果、取消不写入、非法输入不打开选择器。
+- 系统窗口选择器在单测中注入，未将其伪称真实 GUI 测试。尝试桌面界面检查 cua.getState 超时，未能自动操作实际存储窗口。真实窗口显示与点击保存仍待用户验收。
+- 已更新现有 Chrome 扩展 ID 对应的本机组件，未访问或修改 API key。未提交推送。
+
+
+## 2026-10-02 · 0.5.5 导出提示精简
+
+用户要求删除语言模式/保留双语说明与合并 Markdown 说明，并将成功提示放到导出按钮下方且更显眼。ExportDialog.tsx 移除两段文字、下移状态；style.css 新增绿色勾选圆角提示框及深色配色。五处版本统一 0.5.5，README、PLAN、design、changelog 同步说明。沿用项目已有协作规则，保留其他未提交工作。
+
+验证：pnpm run check 全部通过，包含类型、lint、格式、206 项单元测试和构建。Ego Lite 使用既有 history 组件夹具模拟 Obsidian 导出，确认成功文本为“✓导出成功”、状态框 top 大于按钮 bottom、两段说明均不存在；亮色文字 rgb(24,115,71)，背景 rgb(237,249,241)。未新增机械样式测试。
+
+限制：Page.captureScreenshot 超时，无本轮截图；深色视觉及真实 Chrome 最终外观待用户验收。夹具模拟保存不等同真实 Obsidian 文件写入验收。本轮未提交、未推送。
+
+## 2026-10-02 · 0.5.5 恢复浏览器下载
+
+- 用户明确拒绝本机保存窗口，要求恢复上一种下载模式并只修正默认名。已恢复 chrome.downloads.download，保留原 saveAs:true；没有声称已解决此前真实浏览器未弹窗的问题。
+- 原始视频名经编码保存在 data URL 的 MIME 参数中，最终命名监听读取此名称，避免采用 Chrome 默认“下载”。内容 base64 字节保持不变；不同视频同内容不会串名称，其他扩展及非法路径不处理。
+- 移除本轮新增而尚未发布的 service/src/save-export.ts 和仅针对此旧方案的测试，替换为浏览器命名回归（Markdown/TXT/Word、中文及特殊字符、同内容不同名、路径拒绝）。
+- 自动检查结果见本轮工具输出；真实 Chrome 默认名仍待最终人工验收。未提交推送。
+
+
+## 2026-10-02 · 0.5.6 成功提示尺寸调整
+
+用户认可提示框样式，要求文字小于导出按钮。仅调整 style.css 的 export-result：字号由 13px 改为 0.9em（按钮继承同一父级字号），字重 600→500，内边距 8px 12px→4px 8px，图标间距 8px→5px，顶边距 12px→8px，圆角 10px→7px，行高改为 1.5。保留原配色和位置。五处版本同步 0.5.6，README、PLAN、design、changelog 记录本轮调整；项目规则沿用现有 AGENTS.md。
+
+验证：pnpm run check 通过（类型、lint、格式、206 项单元测试、构建），git diff --check 通过。本轮为低影响样式调整，未新增代码测试、未重新执行浏览器视觉验收；Chrome 实际外观待用户查看。未提交、未推送。
+
+## 2026-10-02 · 0.5.7 移除下载提交提示
+
+仅删除 ExportDialog 下载分支成功后的 setMessage，等待下载 RPC 与异常处理仍保留，Obsidian 成功提示不变。保留工作区已有 0.5.6 提示样式改动。pnpm check 全通过（34 文件、206 项测试及构建），未新增机械样式测试，未提交推送。
+
+
+## 2026-10-02 · 0.5.7 用户验收与发布授权
+
+用户确认“现在可以了”，授权本地 Git 提交并推送至现有公开仓库 monical2026/YouTube--- 的 main 分支。本次包含 Obsidian 可选内容合并导出与副本确认、Chrome 下载格式/视频标题文件名修复、导出提示调整；原生本机下载窗口方案已撤回。沿用本构建已通过的 206 项测试和构建结果；验收后仅更新文档状态，没有修改业务代码。
