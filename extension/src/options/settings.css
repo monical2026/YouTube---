@@ -1,7 +1,4 @@
 .settings {
-  --accent: #4b655d;
-  --tint: #eaf0ed;
-  --muted: #66706b;
   max-width: 1100px;
   margin: 48px auto 80px;
   font-size: 14px;
@@ -105,7 +102,7 @@
   min-height: 42px;
   font-size: 14px;
   font-weight: 400;
-  border-color: #c4cdc8;
+  border-color: var(--line);
 }
 .settings .input-control {
   position: relative;
@@ -142,7 +139,7 @@
 }
 .settings a {
   color: var(--accent);
-  text-decoration-color: #a7b9b0;
+  text-decoration-color: var(--accent);
   text-underline-offset: 4px;
 }
 .settings .button-group {
@@ -210,17 +207,6 @@
 .settings :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
-}
-@media (prefers-color-scheme: dark) {
-  .settings {
-    --accent: #b2cec1;
-    --tint: #263c35;
-    --muted: #a6b4ae;
-  }
-  .settings input,
-  .settings select {
-    border-color: #586a63;
-  }
 }
 @media (max-width: 760px) {
   .settings {

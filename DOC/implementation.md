@@ -236,3 +236,7 @@ HistorySidebar 增加图标入口，HistoryPage 负责确认和成功/失败状�
 ## 0.5.5 浏览器下载恢复
 
 撤回 Native saveExport 路由与实现，下载重新经 Chrome downloads API；新增 download-export.ts 保存并解析原始名称供最终命名监听使用。仅本扩展且携带合法名称参数的请求会建议文件名。downloads 权限恢复，Obsidian 模块不变。
+
+## 0.6.3 · A 方案配色统一（2026-10-03）
+
+新增 `extension/src/ui/theme.css` 作为三页共用配色来源，由 `ui/style.css` 导入；历史固定浅色变量引用同一组浅色值，设置不再覆写灰绿配色。保留现有组件结构、内容排版及业务流程。完整自动检查与隔离样式对照通过，后续随 0.6.4 获用户验收，详情见 [测试反馈](test-feedback.md)。

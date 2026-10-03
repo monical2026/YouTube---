@@ -1,3 +1,4 @@
+import { ContentTabIcon } from './ContentTabIcon';
 import { HistoryReaderHeader } from '../history/HistoryReaderHeader';
 import { type Dispatch, type SetStateAction } from 'react';
 import {
@@ -118,16 +119,19 @@ export function PanelControls({
             </button>
           )}
           <nav className="tabs">
-            {[
-              ['transcript', '逐字稿'],
-              ['analysis', '视频脉络'],
-              ['notes', '笔记'],
-            ].map(([id, label]) => (
+            {(
+              [
+                ['transcript', '逐字稿'],
+                ['analysis', '视频脉络'],
+                ['notes', '笔记'],
+              ] as const
+            ).map(([id, label]) => (
               <button
                 className={tab === id ? 'active' : ''}
                 key={id}
                 onClick={() => setTab(id)}
               >
+                <ContentTabIcon kind={id} />
                 {label}
               </button>
             ))}

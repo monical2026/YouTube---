@@ -1,12 +1,19 @@
 .history-layout {
-  --surface: #ffffff;
-  --muted: #707070;
-  --line: #e2e2e0;
-  --accent: #6b8ba4;
-  --tint: #f7f7f5;
+  /* 历史页沿用固定浅色策略，颜色来自共用 A 方案。 */
+  --page: var(--light-page);
+  --surface: var(--light-surface);
+  --text: var(--light-text);
+  --muted: var(--light-muted);
+  --line: var(--light-line);
+  --accent: var(--light-accent);
+  --tint: var(--light-tint);
+  --accent-hover: var(--light-hover);
+  --tab-surface: var(--light-tab);
+  --tab-text: var(--light-tab-text);
+  --on-accent: #ffffff;
   color-scheme: light;
-  color: #4a4a4a;
-  background: #f7f7f5;
+  color: var(--text);
+  background: var(--page);
   display: grid;
   grid-template-columns: 318px minmax(0, 1fr);
   grid-template-rows: 64px minmax(0, 1fr);
@@ -129,7 +136,7 @@
   background: transparent;
 }
 .history-video:hover {
-  background: var(--tint);
+  background: var(--page);
   color: inherit;
 }
 .history-record-icon {
@@ -141,7 +148,7 @@
   height: 46px;
   border-radius: 9px;
   color: var(--accent);
-  background: var(--tint);
+  background: var(--page);
 }
 .history-record-copy {
   min-width: 0;
@@ -200,7 +207,7 @@
 }
 .history-layout mark {
   background: #f6e6ad;
-  color: #4a4a4a;
+  color: var(--text);
 }
 .history-collapsed {
   grid-template-columns: minmax(0, 1fr);
@@ -233,7 +240,7 @@
     inset: 68px auto 6px 6px;
     width: min(318px, 88vw);
     z-index: 30;
-    background: var(--tint);
+    background: var(--page);
     box-shadow: 4px 6px 18px #0002;
   }
   .history-global-actions > span,

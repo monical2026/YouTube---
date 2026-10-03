@@ -1,3 +1,4 @@
+import { ContentTabIcon } from '../ui/ContentTabIcon';
 import type { VideoRecord } from '@youtube-note/shared';
 export function BookIcon() {
   return (
@@ -52,18 +53,20 @@ export function HistoryReaderHeader({
         </button>
       </div>
       <nav className="tabs" aria-label="历史内容类型">
-        {[
-          ['transcript', '逐字稿', '☰'],
-          ['analysis', '视频脉络', '⌘'],
-          ['notes', '笔记', '▤'],
-        ].map(([id, label, symbol]) => (
+        {(
+          [
+            ['transcript', '逐字稿'],
+            ['analysis', '视频脉络'],
+            ['notes', '笔记'],
+          ] as const
+        ).map(([id, label]) => (
           <button
             key={id}
             aria-pressed={tab === id}
             className={tab === id ? 'active' : ''}
             onClick={() => setTab(id)}
           >
-            <span aria-hidden="true">{symbol}</span>
+            <ContentTabIcon kind={id} />
             {label}
           </button>
         ))}

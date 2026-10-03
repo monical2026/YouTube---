@@ -1,0 +1,39 @@
+/* A 方案共用配色。仅定义视觉变量，不改变布局与排版。 */
+:root {
+  --light-page: #f7f8fa;
+  --light-surface: #ffffff;
+  --light-text: #19212e;
+  --light-muted: #707b8d;
+  --light-line: #e6e9ef;
+  --light-accent: #2860df;
+  --light-tint: #edf3ff;
+  --light-hover: #204fc0;
+  --light-tab: #edf0ff;
+  --light-tab-text: #4658cb;
+  --page: var(--light-page);
+  --surface: var(--light-surface);
+  --text: var(--light-text);
+  --muted: var(--light-muted);
+  --line: var(--light-line);
+  --accent: var(--light-accent);
+  --tint: var(--light-tint);
+  --accent-hover: var(--light-hover);
+  --tab-surface: var(--light-tab);
+  --tab-text: var(--light-tab-text);
+  --on-accent: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #191e28;
+    --surface: #222936;
+    --text: #eef1f7;
+    --muted: #a2adbf;
+    --line: #3a4455;
+    --accent: #89aaff;
+    --tint: #2a3b5f;
+    --accent-hover: #adc5ff;
+    --tab-surface: #2a3b5f;
+    --tab-text: #adc5ff;
+    --on-accent: #19212e;
+  }
+}

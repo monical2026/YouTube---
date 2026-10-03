@@ -2,14 +2,14 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  background: var(--tint);
+  background: var(--page);
 }
 .history-reading .app {
   position: relative;
   height: auto;
   min-height: 0;
   flex: 1;
-  background: var(--tint);
+  background: var(--page);
 }
 .history-reading .history-reader-header {
   padding: 18px 22px 12px;
@@ -55,7 +55,7 @@
   padding: 8px 16px;
 }
 .history-layout .primary:hover {
-  background: #7b99af;
+  background: var(--accent-hover);
   color: white;
 }
 .history-reading .tabs {
@@ -64,7 +64,7 @@
   padding: 4px;
   gap: 2px;
   border-radius: 12px;
-  background: var(--line);
+  background: transparent;
   margin-top: 0;
   grid-column: 1 / -1;
   justify-self: start;
@@ -77,17 +77,17 @@
   flex: initial;
   padding: 8px 14px;
   background: transparent;
-  color: var(--muted);
+  color: var(--text);
   font-size: 13px;
   line-height: 21px;
 }
 .history-reading .tabs button.active {
-  background: var(--accent);
-  color: white;
+  background: var(--tab-surface);
+  color: var(--tab-text);
   font-weight: 600;
 }
 .history-reading .tabs button.active:hover {
-  background: #7b99af;
+  background: var(--tab-surface);
 }
 .history-reading .history-reader-flow > .toolbar {
   padding: 8px 22px;
@@ -99,7 +99,7 @@
   border-radius: 20px;
 }
 .history-reading .language-buttons .active {
-  background: var(--line);
+  background: var(--surface);
   color: var(--accent);
 }
 .history-reading .scroll {
@@ -126,7 +126,7 @@
   margin: 12px 0 0;
 }
 .history-reading .segment p[data-language='original'] {
-  color: #4a4a4a;
+  color: var(--text);
 }
 .history-reading .segment p[data-language='translated'] {
   color: var(--muted);
