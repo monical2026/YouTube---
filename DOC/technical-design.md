@@ -1,4 +1,4 @@
-# YouTube 学习笔记插件技术方案
+# VideoNote技术方案
 
 > 状态：实现前方案，代码尚未编写，接口及真实 YouTube 页面尚未实测。技术选择为当前实施默认，验证失败须记录调整原因。
 > 配套文档：[计划](PLAN.md)、[界面设计](design.md)、[文件架构](architecture.md)、[LLM 与服务设置](service-settings.md)、[测试方案](test-plan.md)、[测试反馈](test-feedback.md)。

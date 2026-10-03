@@ -38,7 +38,7 @@ export function HistoryPage() {
     leave.current = callback;
   }, []);
   useEffect(() => {
-    document.title = '历史记录 · 学习笔记';
+    document.title = 'VideoNote · 历史记录';
     let disposed = false,
       request = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -195,7 +195,7 @@ export function HistoryPage() {
           <span className="history-brand-icon">
             <BookIcon />
           </span>
-          <strong>学习笔记</strong>
+          <strong>VideoNote</strong>
           <span>历史记录</span>
         </div>
         <div className="history-global-actions">

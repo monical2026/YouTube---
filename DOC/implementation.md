@@ -248,3 +248,7 @@ NoteCard 顶部使用 DeleteNoteButton 的 iconOnly 直接删除模式，移除�
 ## 0.6.6 · 删除确认
 
 DeleteNoteButton 不再为 iconOnly 绕过确认；卡片垃圾桶与编辑器文字按钮共享确认及防重复逻辑。0.6.5 直接删除说明由本节取代。取消、确认和处理中重复点击回归通过，完整检查通过，待 Chrome 人工验收。
+
+## 0.7.1 · VideoNote
+
+产品对外名称统一为 VideoNote；内部包名和兼容标识仍为 youtube-note，不影响既有笔记与密钥读取。当前平台能力不变。名称入口覆盖 manifest、HTML title、content 挂载入口、历史品牌、设置标题和快捷键指引。完整检查通过，待 Chrome 外观验收。

@@ -4,7 +4,7 @@ import { errorText } from '../lib/rpc';
 const actions = [
   {
     name: '_execute_action',
-    label: '打开学习笔记',
+    label: '打开 VideoNote',
     detail: '直接打开当前视频的学习笔记面板。',
   },
   {
@@ -60,7 +60,9 @@ export function ShortcutSettings() {
   return (
     <section id="shortcuts">
       <h2>快捷键</h2>
-      <p>在 YouTube 普通视频页使用，无需先点击页面上的学习笔记按钮。</p>
+      <p>
+        在支持的 YouTube 或 B 站视频页使用，无需先点击页面上的 VideoNote 按钮。
+      </p>
       {actions.map(({ name, label, detail }) => (
         <div className="card" key={name}>
           <div className="row">
@@ -77,8 +79,8 @@ export function ShortcutSettings() {
         </div>
       ))}
       <p>
-        点击下方按钮，在 Chrome 页面找到“YouTube
-        学习笔记”，分别录入两个快捷键。修改后由 Chrome
+        点击下方按钮，在 Chrome
+        页面找到“VideoNote”，分别录入两个快捷键。修改后由 Chrome
         自动保存，返回这里会更新显示，无需点击“保存全部设置”。
       </p>
       <p className="muted">

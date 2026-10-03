@@ -182,7 +182,7 @@ function SettingsApp() {
   }
   return (
     <main className="settings">
-      <h1>YouTube 学习笔记 · 设置</h1>
+      <h1>VideoNote · 设置</h1>
       <p className="muted">个人电脑上的服务连接与翻译偏好</p>
       <div className="settings-layout">
         <SettingsNav />

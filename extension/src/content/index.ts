@@ -41,7 +41,7 @@ function frameHost(noteId?: string): HTMLElement {
   const shadow = host.attachShadow({ mode: 'open' });
   const frame = document.createElement('iframe');
   frame.src = `${panelUrl}${noteId ? `?note=${encodeURIComponent(noteId)}` : ''}`;
-  frame.title = noteId ? '快捷笔记' : '学习笔记';
+  frame.title = noteId ? 'VideoNote · 快捷笔记' : 'VideoNote';
   frame.allow = 'translator; clipboard-write';
   frame.style.cssText =
     'width:100%;height:100%;border:0;border-radius:14px;color-scheme:light dark';
@@ -68,7 +68,7 @@ function showPanel() {
     collapsedBar.style.cssText =
       'align-items:center;justify-content:space-between;padding:8px 12px;background:#f5f5fa;color:#242630;border:1px solid #e4e7f0;border-radius:12px;font:14px system-ui';
     const name = document.createElement('span');
-    name.textContent = '学习笔记';
+    name.textContent = 'VideoNote';
     const expand = document.createElement('button');
     expand.textContent = '展开';
     expand.style.cssText =
@@ -259,7 +259,7 @@ const timer = setInterval(() => {
     panelOpen = false;
     mountedVideo = metadata.videoId;
     button = document.createElement('button');
-    button.textContent = '学习笔记';
+    button.textContent = 'VideoNote';
     button.setAttribute('aria-expanded', 'false');
     button.style.cssText =
       'font:500 14px system-ui;background:#4658cb;color:white;border:0;border-radius:18px;padding:9px 16px;margin:8px 0;cursor:pointer';

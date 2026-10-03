@@ -34,7 +34,7 @@ await writeFile(
 await chmod(join(directory, 'keychain-bridge'), 0o700);
 const registration = {
   name: 'com.youtube_note.host',
-  description: 'YouTube 学习笔记钥匙串组件',
+  description: 'VideoNote 钥匙串组件',
   path: join(directory, 'launch.sh'),
   type: 'stdio',
   allowed_origins: [`chrome-extension://${extensionId}/`],

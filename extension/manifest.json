@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "YouTube 学习笔记",
-  "version": "0.6.6",
+  "name": "VideoNote",
+  "version": "0.7.1",
   "description": "带时间的双语逐字稿、中文梳理和可编辑学习笔记。",
   "permissions": [
     "storage",
@@ -20,7 +20,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "打开学习笔记",
+    "default_title": "打开 VideoNote",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png",
