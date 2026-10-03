@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import type { Note } from '@youtube-note/shared';
 import { rpc, errorText } from '../lib/rpc';
-import { answerNote } from './answer-note';
+import { answerNote, isRepeatedQuestion, pendingQuestion } from './answer-note';
 export function AskDialog({
   note,
   onSave,
@@ -15,7 +15,7 @@ export function AskDialog({
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState(note),
-    [question, setQuestion] = useState(note.question),
+    [question, setQuestion] = useState(() => pendingQuestion(note)),
     [busy, setBusy] = useState(false),
     [settingsReady, setSettingsReady] = useState(false),
     [status, setStatus] = useState(''),
@@ -51,7 +51,11 @@ export function AskDialog({
     });
   }
   async function ask() {
-    if (locked.current || !settingsReady) return;
+    if (locked.current || !settingsReady || unsaved) return;
+    if (isRepeatedQuestion(draft, question)) {
+      setStatus('这个问题已有回答，请查看上方记录或输入新的追问。');
+      return;
+    }
     locked.current = true;
     setBusy(true);
     setStatus('正在保存问题…');
@@ -61,7 +65,7 @@ export function AskDialog({
         question: question.trim(),
         updatedAt: Date.now(),
       };
-      await answerNote(
+      const answered = await answerNote(
         next,
         persist,
         async (payload) => {
@@ -79,6 +83,7 @@ export function AskDialog({
         },
         answerInstructions,
       );
+      if (answered && alive.current) setQuestion('');
     } catch (e) {
       if (alive.current) setStatus(errorText(e));
     } finally {
@@ -88,7 +93,7 @@ export function AskDialog({
   }
   async function close() {
     try {
-      await persist(unsaved ?? { ...draft, question, updatedAt: Date.now() });
+      await persist(unsaved ?? draft);
       onClose();
     } catch (e) {
       setStatus(errorText(e));
@@ -143,6 +148,11 @@ export function AskDialog({
           />
         </label>
         <p role="status">{status}</p>
+        {isRepeatedQuestion(draft, question) && (
+          <p className="muted">
+            这个问题已有回答，请查看上方记录或输入新的追问。
+          </p>
+        )}
         <div className="row">
           {unsaved && !busy && (
             <button
@@ -161,7 +171,13 @@ export function AskDialog({
           </button>
           <button
             className="primary"
-            disabled={busy || !settingsReady || !question.trim() || !!unsaved}
+            disabled={
+              busy ||
+              !settingsReady ||
+              !question.trim() ||
+              !!unsaved ||
+              isRepeatedQuestion(draft, question)
+            }
             onClick={() => void ask()}
           >
             {busy ? '回答中…' : '发送问题'}

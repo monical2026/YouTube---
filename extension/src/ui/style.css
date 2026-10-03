@@ -1050,3 +1050,35 @@ progress {
   overflow-wrap: anywhere;
   padding-left: 20px;
 }
+
+.note-delete {
+  position: relative;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.note-delete > button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  min-height: 28px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+}
+.note-delete > button:hover {
+  color: #a12828;
+  background: #ffeded;
+}
+.note-delete [role='alert'] {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: min(260px, 65vw);
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  z-index: 1;
+}

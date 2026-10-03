@@ -58,6 +58,7 @@ export function NoteCard({
         >
           {timestamp(note.startMs).padStart(5, '0')}
         </button>
+        <DeleteNoteButton onDelete={onDelete} iconOnly />
       </div>
       {note.selectedText && (
         <blockquote className="excerpt-content">
@@ -101,8 +102,6 @@ export function NoteCard({
       <div className="note-actions">
         <button onClick={onAsk}>AI提问</button>
         <button onClick={onEdit}>{note.draft ? '继续草稿' : '编辑'}</button>
-        <button onClick={() => void onSeek()}>跳转</button>
-        <DeleteNoteButton onDelete={onDelete} />
       </div>
     </article>
   );

@@ -240,3 +240,11 @@ HistorySidebar 增加图标入口，HistoryPage 负责确认和成功/失败状�
 ## 0.6.3 · A 方案配色统一（2026-10-03）
 
 新增 `extension/src/ui/theme.css` 作为三页共用配色来源，由 `ui/style.css` 导入；历史固定浅色变量引用同一组浅色值，设置不再覆写灰绿配色。保留现有组件结构、内容排版及业务流程。完整自动检查与隔离样式对照通过，后续随 0.6.4 获用户验收，详情见 [测试反馈](test-feedback.md)。
+
+## 0.6.5 · 笔记卡片与重复提问
+
+NoteCard 顶部使用 DeleteNoteButton 的 iconOnly 直接删除模式，移除底部跳转；编辑器的删除确认不变。answer-note 统一判定最后一轮与当前问题的连续重复，AskDialog 成功保存后清空输入并避免关闭时覆盖疑问。新增 tests/unit/answer-repeat.test.ts，自动检查与隔离界面验证通过；尚未复现的真实保存不一致保留为待核对，见测试反馈。
+
+## 0.6.6 · 删除确认
+
+DeleteNoteButton 不再为 iconOnly 绕过确认；卡片垃圾桶与编辑器文字按钮共享确认及防重复逻辑。0.6.5 直接删除说明由本节取代。取消、确认和处理中重复点击回归通过，完整检查通过，待 Chrome 人工验收。
